@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: opendeepwiki
-  labels:
-    name: opendeepwiki
-    app.kubernetes.io/name: opendeepwiki
