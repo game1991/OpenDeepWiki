@@ -1,0 +1,140 @@
+# OpenDeepWiki Kind 环境 + Harbor 镜像配置
+# 使用: helm upgrade --install opendeepwiki ./charts/opendeepwiki -f config/values-kind-harbor.yaml
+
+# ==========================================
+# 后端服务配置
+# ==========================================
+backend:
+  replicaCount: 1
+
+  image:
+    repository: harbor.eagleye.com/open-deep-wiki/opendeepwiki-backend
+    tag: latest
+    pullPolicy: Always
+
+  imagePullSecrets:
+    - name: harbor-secret
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  # 环境变量（非敏感信息）
+  # AI 配置 - 金山云星源平台 kimi-k2.5
+  environment:
+    ASPNETCORE_ENVIRONMENT: "Production"
+    URLS: "http://+:8080"
+    Database__Type: "sqlite"
+    ConnectionStrings__Default: "Data Source=/data/opendeepwiki.db"
+    REPOSITORIES_DIRECTORY: "/data"
+    # 金山云星源平台 API 端点
+    ENDPOINT: "https://kspmas.ksyun.com/v1"
+    CHAT_REQUEST_TYPE: "OpenAI"
+    CHAT_REQUEST_MODEL_ID: "kimi-k2.5"
+    CATALOG_REQUEST_MODEL_ID: "kimi-k2.5"
+    CONTENT_REQUEST_MODEL_ID: "kimi-k2.5"
+    WIKI_CATALOG_MODEL: "kimi-k2.5"
+    WIKI_CATALOG_ENDPOINT: "https://kspmas.ksyun.com/v1"
+    WIKI_CATALOG_REQUEST_TYPE: "OpenAI"
+    WIKI_CONTENT_MODEL: "kimi-k2.5"
+    WIKI_CONTENT_ENDPOINT: "https://kspmas.ksyun.com/v1"
+    WIKI_CONTENT_REQUEST_TYPE: "OpenAI"
+    EMBEDDING_MODEL_ID: "text-embedding-3-small"
+    WIKI_PARALLEL_COUNT: "5"
+    WIKI_LANGUAGES: "en,zh"
+
+  # 敏感信息通过 Secret 注入
+  secrets:
+    - name: CHAT_API_KEY
+      secretName: opendeepwiki-secrets
+      key: chat-api-key
+    - name: CATALOG_API_KEY
+      secretName: opendeepwiki-secrets
+      key: catalog-api-key
+    - name: CONTENT_API_KEY
+      secretName: opendeepwiki-secrets
+      key: content-api-key
+    - name: JWT_SECRET
+      secretName: opendeepwiki-secrets
+      key: jwt-secret
+
+# ==========================================
+# 前端服务配置
+# ==========================================
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: harbor.eagleye.com/open-deep-wiki/opendeepwiki-web
+    tag: latest
+    pullPolicy: Always
+
+  imagePullSecrets:
+    - name: harbor-secret
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  environment:
+    NODE_ENV: "production"
+    API_PROXY_URL: "http://opendeepwiki-backend:8080"
+
+# ==========================================
+# Service 配置
+# ==========================================
+service:
+  backend:
+    type: ClusterIP
+    port: 8080
+  frontend:
+    type: ClusterIP
+    port: 3000
+
+# ==========================================
+# Ingress 配置
+# ==========================================
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: local.wiki.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+          port: 3000
+        - path: /api
+          pathType: Prefix
+          service: backend
+          port: 8080
+
+# ==========================================
+# 关闭生产功能
+# ==========================================
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false
+
+serviceAccount:
+  create: true
