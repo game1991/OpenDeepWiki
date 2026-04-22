@@ -1,0 +1,52 @@
+1. 获取应用访问地址：
+
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.frontend.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "opendeepwiki.fullname" . }}-frontend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.frontend.type }}}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "opendeepwiki.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "opendeepwiki.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.frontend.port }}
+{{- else if contains "ClusterIP" .Values.service.frontend.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "opendeepwiki.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=frontend" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:3000 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 3000:$CONTAINER_PORT
+{{- end }}
+
+2. 默认管理员账号：
+   邮箱: admin@routin.ai
+   密码: Admin@123
+   ⚠️  首次登录后请立即修改密码！
+
+3. 查看后端 API 状态：
+   kubectl exec --namespace {{ .Release.Namespace }} \
+     deployment/{{ include "opendeepwiki.fullname" . }}-backend \
+     -- curl -s http://localhost:8080/health
+
+4. 查看 Pod 状态：
+   kubectl get pods --namespace {{ .Release.Namespace }}
+
+{{- if .Values.mysql.enabled }}
+5. MySQL 数据库信息：
+   Host: {{ include "opendeepwiki.fullname" . }}-mysql-primary
+   Port: 3306
+   Database: {{ .Values.mysql.auth.database }}
+   Username: {{ .Values.mysql.auth.username }}
+{{- end }}
+
+{{- if .Values.postgresql.enabled }}
+5. PostgreSQL 数据库信息：
+   Host: {{ include "opendeepwiki.fullname" . }}-postgresql
+   Port: 5432
+   Database: {{ .Values.postgresql.auth.database }}
+   Username: {{ .Values.postgresql.auth.username }}
+{{- end }}

@@ -1,0 +1,21 @@
+# 二进制可执行文件
+minikube-linux-amd64
+*.exe
+*.dll
+*.so
+
+# IDE 配置
+.vscode/
+.idea/
+
+# Claude Code 本地文件
+.claude/
+
+# 临时文件
+*.tmp
+*.log
+*.swp
+*~
+
+# 数据目录（如果包含生成的数据）
+data/*.tmp

@@ -1,0 +1,215 @@
+# OpenDeepWiki Helm Chart 默认配置
+
+# ==========================================
+# 全局配置
+# ==========================================
+nameOverride: ""
+fullnameOverride: ""
+
+# ==========================================
+# 后端服务配置
+# ==========================================
+backend:
+  replicaCount: 2
+
+  image:
+    repository: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+  # 持久化存储（知识库文件存储）
+  persistence:
+    enabled: true
+    storageClass: "local-path"
+    size: 50Gi
+    accessMode: ReadWriteOnce
+
+  # 环境变量配置
+  environment:
+    ASPNETCORE_ENVIRONMENT: Production
+    URLS: http://+:8080
+    # 数据库配置（根据启用的数据库类型调整）
+    Database__Type: sqlite
+    ConnectionStrings__Default: Data Source=/data/opendeepwiki.db
+    REPOSITORIES_DIRECTORY: /data
+    # AI 配置
+    ENDPOINT: https://api.openai.com/v1
+    CHAT_REQUEST_TYPE: OpenAI
+    WIKI_CATALOG_MODEL: gpt-4o
+    WIKI_CATALOG_ENDPOINT: https://api.openai.com/v1
+    WIKI_CATALOG_REQUEST_TYPE: OpenAI
+    WIKI_CONTENT_MODEL: gpt-4o
+    WIKI_CONTENT_ENDPOINT: https://api.openai.com/v1
+    WIKI_CONTENT_REQUEST_TYPE: OpenAI
+    WIKI_PARALLEL_COUNT: "5"
+    WIKI_LANGUAGES: "en,zh"
+
+  # 敏感信息从 Secret 引用
+  secrets: []
+  # secrets:
+  #   - name: CHAT_API_KEY
+  #     secretName: opendeepwiki-secrets
+  #     key: chat-api-key
+
+  # Init Containers：等待依赖服务就绪
+  initContainers: []
+
+  # Pod 安全上下文
+  podSecurityContext: {}
+  securityContext: {}
+
+  # 节点选择器
+  nodeSelector: {}
+
+  # 容忍度
+  tolerations: []
+
+  # 亲和性
+  affinity: {}
+
+# ==========================================
+# 前端服务配置
+# ==========================================
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki-web
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  environment:
+    NODE_ENV: production
+    API_PROXY_URL: http://opendeepwiki-backend:8080
+
+  secrets: []
+
+  podSecurityContext: {}
+  securityContext: {}
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ==========================================
+# Service 配置
+# ==========================================
+service:
+  backend:
+    type: ClusterIP
+    port: 8080
+  frontend:
+    type: ClusterIP
+    port: 3000
+
+# ==========================================
+# MySQL 数据库配置（可选）
+# ==========================================
+mysql:
+  enabled: false
+  architecture: standalone
+  auth:
+    rootPassword: ""
+    username: opendeepwiki
+    password: ""
+    database: opendeepwiki
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "local-path"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+
+# ==========================================
+# PostgreSQL 数据库配置（可选）
+# ==========================================
+postgresql:
+  enabled: false
+  auth:
+    username: opendeepwiki
+    password: ""
+    database: opendeepwiki
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "local-path"
+
+# ==========================================
+# Ingress 配置
+# ==========================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: opendeepwiki.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+  tls: []
+  # tls:
+  #   - secretName: opendeepwiki-tls
+  #     hosts:
+  #       - opendeepwiki.local
+
+# ==========================================
+# 自动扩缩容配置
+# ==========================================
+autoscaling:
+  enabled: false
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  frontend:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# ==========================================
+# Pod Disruption Budget 配置
+# ==========================================
+pdb:
+  enabled: false
+  backend:
+    minAvailable: 1
+  frontend:
+    minAvailable: 1
+
+# ==========================================
+# 服务账号配置
+# ==========================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""

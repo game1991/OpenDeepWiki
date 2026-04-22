@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opendeepwiki-backend
+  namespace: opendeepwiki
+  labels:
+    app.kubernetes.io/name: opendeepwiki
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opendeepwiki
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opendeepwiki
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: backend
+          image: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: opendeepwiki-backend-config
+          env:
+            - name: CHAT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opendeepwiki-secrets
+                  key: chat-api-key
+            - name: WIKI_CATALOG_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opendeepwiki-secrets
+                  key: catalog-api-key
+            - name: WIKI_CONTENT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opendeepwiki-secrets
+                  key: content-api-key
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opendeepwiki-secrets
+                  key: jwt-secret
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: opendeepwiki-backend-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opendeepwiki-frontend
+  namespace: opendeepwiki
+  labels:
+    app.kubernetes.io/name: opendeepwiki
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opendeepwiki
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opendeepwiki
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: opendeepwiki-frontend-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5

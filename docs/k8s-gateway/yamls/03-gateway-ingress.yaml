@@ -1,0 +1,23 @@
+# 网关 Ingress 路由（HTTP）
+# 域名：local.gateway.com
+# 端口：8880（Kind extraPortMappings 映射）
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domain-routing
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: local.gateway.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 80
