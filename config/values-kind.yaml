@@ -29,17 +29,28 @@ backend:
     accessMode: ReadWriteOnce
 
   # 环境变量（非敏感信息）
+  # AI 配置 - 金山云星源平台 kimi-k2.5
   environment:
     ASPNETCORE_ENVIRONMENT: "Production"
     URLS: "http://+:8080"
     Database__Type: "sqlite"
     ConnectionStrings__Default: "Data Source=/data/opendeepwiki.db"
     REPOSITORIES_DIRECTORY: "/data"
-    ENDPOINT: "https://api.openai.com/v1"
-    CHAT_REQUEST_MODEL_ID: "gpt-4o-mini"
-    CATALOG_REQUEST_MODEL_ID: "gpt-4o-mini"
-    CONTENT_REQUEST_MODEL_ID: "gpt-4o-mini"
+    # 金山云星源平台 API 端点
+    ENDPOINT: "https://kspmas.ksyun.com/v1"
+    CHAT_REQUEST_TYPE: "OpenAI"
+    CHAT_REQUEST_MODEL_ID: "kimi-k2.5"
+    CATALOG_REQUEST_MODEL_ID: "kimi-k2.5"
+    CONTENT_REQUEST_MODEL_ID: "kimi-k2.5"
+    WIKI_CATALOG_MODEL: "kimi-k2.5"
+    WIKI_CATALOG_ENDPOINT: "https://kspmas.ksyun.com/v1"
+    WIKI_CATALOG_REQUEST_TYPE: "OpenAI"
+    WIKI_CONTENT_MODEL: "kimi-k2.5"
+    WIKI_CONTENT_ENDPOINT: "https://kspmas.ksyun.com/v1"
+    WIKI_CONTENT_REQUEST_TYPE: "OpenAI"
     EMBEDDING_MODEL_ID: "text-embedding-3-small"
+    WIKI_PARALLEL_COUNT: "5"
+    WIKI_LANGUAGES: "en,zh"
 
   # 敏感信息通过 Secret 注入
   secrets:
