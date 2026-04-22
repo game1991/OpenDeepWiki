@@ -1,0 +1,58 @@
+--- /tmp/OpenDeepWiki/src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs.bak	2026-04-22 19:01:42.273831840 +0800
++++ /tmp/OpenDeepWiki/src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs	2026-04-22 19:03:19.269210724 +0800
+@@ -455,6 +455,28 @@
+         CancellationToken cancellationToken)
+     {
+         var stopwatch = Stopwatch.StartNew();
++
++        // 构建带凭据的 URL（解决 LibGit2Sharp 凭据回调问题）
++        string cloneUrl = workspace.GitUrl;
++        if (credentials is UsernamePasswordCredentials usernamePassword &&
++            !string.IsNullOrEmpty(usernamePassword.Username))
++        {
++            try
++            {
++                var uri = new Uri(workspace.GitUrl);
++                // 格式: https://username:password@host/path
++                var user = Uri.EscapeDataString(usernamePassword.Username);
++                var pass = Uri.EscapeDataString(usernamePassword.Password ?? string.Empty);
++                cloneUrl = $"{uri.Scheme}://{user}:{pass}@{uri.Host}{(uri.IsDefaultPort ? "" : ":" + uri.Port)}{uri.PathAndQuery}";
++                _logger.LogDebug("Using embedded credentials URL: {Scheme}://{User}@****{Path}",
++                    uri.Scheme, usernamePassword.Username, uri.PathAndQuery);
++            }
++            catch (UriFormatException ex)
++            {
++                _logger.LogWarning(ex, "Failed to parse GitUrl for credential embedding, using original URL");
++            }
++        }
++
+         _logger.LogInformation(
+             "Starting repository clone. GitUrl: {Url}, Branch: {Branch}, TargetPath: {Path}",
+             workspace.GitUrl, workspace.BranchName, workspace.WorkingDirectory);
+@@ -475,6 +497,7 @@
+         // 跳过 SSL 证书验证（解决 TLS 解密错误）
+         cloneOptions.FetchOptions.CertificateCheck = (_, _, _) => true;
+ 
++        // 保留凭据回调作为备用（某些 Git 服务器可能需要）
+         if (credentials != null)
+         {
+             cloneOptions.FetchOptions.CredentialsProvider = (_, _, _) => credentials;
+@@ -495,13 +518,14 @@
+ 
+                 await Task.Run(() =>
+                 {
+-                    GitRepository.Clone(workspace.GitUrl, workspace.WorkingDirectory, cloneOptions);
+-                    
++                    // 使用带凭据的 URL 进行克隆
++                    GitRepository.Clone(cloneUrl, workspace.WorkingDirectory, cloneOptions);
++
+                     // Explicitly checkout the target branch after clone
+                     using var repo = new GitRepository(workspace.WorkingDirectory);
+-                    var targetBranch = repo.Branches[workspace.BranchName] 
++                    var targetBranch = repo.Branches[workspace.BranchName]
+                         ?? repo.Branches[$"origin/{workspace.BranchName}"];
+-                    
++
+                     if (targetBranch != null)
+                     {
+                         if (targetBranch.IsRemote)
