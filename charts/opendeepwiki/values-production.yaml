@@ -1,0 +1,228 @@
+# OpenDeepWiki 生产环境配置
+
+# ==========================================
+# 后端服务配置 - 生产环境
+# ==========================================
+backend:
+  replicaCount: 3
+
+  image:
+    repository: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "4Gi"
+      cpu: "4000m"
+
+  persistence:
+    enabled: true
+    storageClass: "local-path"
+    size: 100Gi
+    accessMode: ReadWriteOnce
+
+  environment:
+    ASPNETCORE_ENVIRONMENT: Production
+    URLS: http://+:8080
+    # 生产环境建议使用 MySQL
+    Database__Type: mysql
+    ConnectionStrings__Default: >
+      Server=opendeepwiki-mysql-primary;
+      Port=3306;
+      Database=opendeepwiki;
+      User Id=opendeepwiki;
+      Charset=utf8mb4;
+    REPOSITORIES_DIRECTORY: /data
+    ENDPOINT: https://api.openai.com/v1
+    CHAT_REQUEST_TYPE: OpenAI
+    WIKI_CATALOG_MODEL: gpt-4o
+    WIKI_CATALOG_ENDPOINT: https://api.openai.com/v1
+    WIKI_CATALOG_REQUEST_TYPE: OpenAI
+    WIKI_CONTENT_MODEL: gpt-4o
+    WIKI_CONTENT_ENDPOINT: https://api.openai.com/v1
+    WIKI_CONTENT_REQUEST_TYPE: OpenAI
+    WIKI_PARALLEL_COUNT: "10"
+    WIKI_LANGUAGES: "en,zh"
+
+  secrets:
+    - name: CHAT_API_KEY
+      secretName: opendeepwiki-secrets
+      key: chat-api-key
+    - name: WIKI_CATALOG_API_KEY
+      secretName: opendeepwiki-secrets
+      key: catalog-api-key
+    - name: WIKI_CONTENT_API_KEY
+      secretName: opendeepwiki-secrets
+      key: content-api-key
+    - name: JWT_SECRET_KEY
+      secretName: opendeepwiki-secrets
+      key: jwt-secret
+
+  # 等待 MySQL 就绪
+  initContainers:
+    - name: wait-for-mysql
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          until nc -z opendeepwiki-mysql-primary 3306; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 2
+          done
+          echo "MySQL is ready!"
+
+  # 生产环境亲和性配置（反亲和，分散部署）
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - backend
+            topologyKey: kubernetes.io/hostname
+
+# ==========================================
+# 前端服务配置 - 生产环境
+# ==========================================
+frontend:
+  replicaCount: 3
+
+  image:
+    repository: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki-web
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  environment:
+    NODE_ENV: production
+    API_PROXY_URL: http://opendeepwiki-backend:8080
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - frontend
+            topologyKey: kubernetes.io/hostname
+
+# ==========================================
+# Service 配置
+# ==========================================
+service:
+  backend:
+    type: ClusterIP
+    port: 8080
+  frontend:
+    type: ClusterIP
+    port: 3000
+
+# ==========================================
+# MySQL 数据库配置 - 生产环境
+# ==========================================
+mysql:
+  enabled: true
+  architecture: standalone
+  auth:
+    rootPassword: "CHANGE_ME_ROOT_PASSWORD"
+    username: opendeepwiki
+    password: "CHANGE_ME_USER_PASSWORD"
+    database: opendeepwiki
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: "local-path"
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    configuration: |-
+      [mysqld]
+      max_connections=500
+      innodb_buffer_pool_size=1G
+      character-set-server=utf8mb4
+      collation-server=utf8mb4_unicode_ci
+
+# ==========================================
+# Ingress 配置 - 生产环境
+# ==========================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # 如需自动 TLS
+  hosts:
+    - host: wiki.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: opendeepwiki-tls
+      hosts:
+        - wiki.yourdomain.com
+
+# ==========================================
+# 自动扩缩容配置 - 生产环境
+# ==========================================
+autoscaling:
+  enabled: true
+  backend:
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  frontend:
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# ==========================================
+# Pod Disruption Budget - 生产环境
+# ==========================================
+pdb:
+  enabled: true
+  backend:
+    minAvailable: 2
+  frontend:
+    minAvailable: 2
+
+# ==========================================
+# 服务账号配置
+# ==========================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""

@@ -1,0 +1,35 @@
+# Dashboard 管理员账号 + 长期 Token
+# 必须与 Dashboard 部署在同一 namespace（kubernetes-dashboard）
+# 必须修改 Dashboard Deployment 使用此 ServiceAccount
+# 命令：kubectl patch deployment kubernetes-dashboard -n kubernetes-dashboard \
+#        -p '{"spec":{"template":{"spec":{"serviceAccountName":"admin-user"}}}}'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+---
+# 长期 Token Secret（K8s 1.24+ 需手动创建）
+# Token 不会自动过期，适合本地开发环境
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-user-token
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/service-account.name: admin-user
+type: kubernetes.io/service-account-token

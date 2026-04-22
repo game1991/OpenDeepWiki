@@ -1,0 +1,77 @@
+# OpenDeepWiki 开发环境 Helm 配置
+
+# 后端服务 - 开发环境（单副本，资源较少）
+backend:
+  replicaCount: 1
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  persistence:
+    enabled: true
+    storageClass: "local-path"
+    size: 10Gi
+
+  environment:
+    ASPNETCORE_ENVIRONMENT: Development
+    URLS: http://+:8080
+    Database__Type: sqlite
+    ConnectionStrings__Default: Data Source=/data/opendeepwiki.db
+    REPOSITORIES_DIRECTORY: /data
+    ENDPOINT: https://api.openai.com/v1
+    CHAT_REQUEST_TYPE: OpenAI
+    WIKI_CATALOG_MODEL: gpt-4o-mini  # 使用低成本模型
+    WIKI_CATALOG_ENDPOINT: https://api.openai.com/v1
+    WIKI_CATALOG_REQUEST_TYPE: OpenAI
+    WIKI_CONTENT_MODEL: gpt-4o-mini
+    WIKI_CONTENT_ENDPOINT: https://api.openai.com/v1
+    WIKI_CONTENT_REQUEST_TYPE: OpenAI
+    WIKI_PARALLEL_COUNT: "2"  # 减少并发
+    WIKI_LANGUAGES: "en,zh"
+
+  # 开发环境可能不需要配置 secrets
+  secrets: []
+
+  initContainers: []
+
+# 前端服务 - 开发环境
+frontend:
+  replicaCount: 1
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# 开发环境不使用 MySQL（使用 SQLite）
+mysql:
+  enabled: false
+
+# Ingress 配置（使用本地域名）
+ingress:
+  enabled: true
+  hosts:
+    - host: opendeepwiki-dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+
+# 开发环境不启用 HPA
+autoscaling:
+  enabled: false
+
+# 开发环境不启用 PDB
+pdb:
+  enabled: false

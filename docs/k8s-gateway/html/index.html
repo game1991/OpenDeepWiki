@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K8s 本地服务网关 | Cyber Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 暗色主题 - 赛博朋克 */
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(20, 20, 35, 0.8);
+            --text-primary: #00f0ff;
+            --text-secondary: #ff00ff;
+            --text-normal: #e0e0e0;
+            --border-color: #00f0ff;
+            --glow-color: rgba(0, 240, 255, 0.5);
+            --accent-green: #00ff88;
+            --accent-pink: #ff0080;
+            --accent-purple: #bf00ff;
+            --gradient-1: linear-gradient(135deg, #00f0ff 0%, #ff00ff 100%);
+            --gradient-2: linear-gradient(45deg, #00ff88 0%, #00f0ff 100%);
+            --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        [data-theme="light"] {
+            /* 亮色主题 - 阳光模式 */
+            --bg-primary: #f0f4f8;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --text-primary: #0066cc;
+            --text-secondary: #cc0066;
+            --text-normal: #333333;
+            --border-color: #0066cc;
+            --glow-color: rgba(0, 102, 204, 0.3);
+            --accent-green: #00aa66;
+            --accent-pink: #cc0066;
+            --accent-purple: #6600cc;
+            --gradient-1: linear-gradient(135deg, #0066cc 0%, #cc0066 100%);
+            --gradient-2: linear-gradient(45deg, #00aa66 0%, #0066cc 100%);
+            --shadow-glow: 0 4px 20px rgba(0, 102, 204, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-normal);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        /* 背景网格动画 */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        [data-theme="light"] .bg-grid {
+            background-image:
+                linear-gradient(rgba(0, 102, 204, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 102, 204, 0.05) 1px, transparent 1px);
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* 头部 */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 20px 0;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Orbitron', 'Noto Sans SC', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px var(--glow-color);
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-family: 'Orbitron', monospace;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--glow-color);
+        }
+
+        .theme-icon {
+            font-size: 1.5rem;
+        }
+
+        /* 主要内容 */
+        main {
+            padding: 40px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px var(--glow-color);
+            border-color: var(--text-primary);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(0 0 10px var(--glow-color));
+        }
+
+        .card-title {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+
+        .card-subtitle {
+            font-family: 'Orbitron', monospace;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        /* 服务链接 */
+        .service-link {
+            display: block;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            text-decoration: none;
+            color: var(--text-normal);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="light"] .service-link {
+            background: rgba(0, 102, 204, 0.05);
+        }
+
+        .service-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .service-link:hover::before {
+            left: 100%;
+        }
+
+        .service-link:hover {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 20px var(--glow-color);
+            transform: translateX(10px);
+        }
+
+        .service-name {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .service-url {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .service-desc {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-normal);
+            opacity: 0.8;
+        }
+
+        /* 状态指示器 */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        [data-theme="light"] .code-block {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .code-block code {
+            color: var(--accent-green);
+            display: block;
+            padding-right: 60px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        /* 信息网格 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        [data-theme="light"] .info-item {
+            background: rgba(0, 102, 204, 0.05);
+        }
+
+        .info-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* 页脚 */
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 30px 0;
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .grid { grid-template-columns: 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-primary);
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 0.9rem;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="toast" id="toast"></div>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>⚡ K8s 本地服务网关</h1>
+                    <div class="subtitle">CYBER GATEWAY // SYSTEM ONLINE</div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span class="theme-icon" id="theme-icon">🌙</span>
+                    <span id="theme-text">暗色模式</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="grid">
+            <!-- 核心服务卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🎯</span>
+                    <div>
+                        <div class="card-title">核心服务</div>
+                        <div class="card-subtitle">CORE SERVICES</div>
+                    </div>
+                </div>
+
+                <a href="https://local.dashboard.com:8443/" target="_blank" class="service-link">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <div class="service-name">📊 Kubernetes Dashboard</div>
+                            <div class="service-url">https://local.dashboard.com:8443/</div>
+                            <div class="service-desc">K8s 图形化管理界面 | Token 认证 | 全功能控制面板</div>
+                        </div>
+                        <span class="status status-online">
+                            <span class="status-indicator"></span>
+                            ONLINE
+                        </span>
+                    </div>
+                </a>
+
+                <a href="http://local.wiki.com:8880/" target="_blank" class="service-link">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <div class="service-name">📖 OpenDeepWiki</div>
+                            <div class="service-url">http://local.wiki.com:8880/</div>
+                            <div class="service-desc">AI 驱动的代码知识库 | 自动文档生成 | 仓库分析</div>
+                        </div>
+                        <span class="status status-online">
+                            <span class="status-indicator"></span>
+                            ONLINE
+                        </span>
+                    </div>
+                </a>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">
+                        🔑 获取访问 Token：
+                    </div>
+                    <div class="code-block">
+                        <code>kubectl create token admin-user -n kubernetes-dashboard</code>
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统状态卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🔧</span>
+                    <div>
+                        <div class="card-title">系统状态</div>
+                        <div class="card-subtitle">SYSTEM STATUS</div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">WSL2 IP</div>
+                        <div class="info-value">172.17.247.87</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Kind 版本</div>
+                        <div class="info-value">v0.20.0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">K8s 版本</div>
+                        <div class="info-value">v1.27.3</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">节点状态</div>
+                        <div class="info-value" style="color: var(--accent-green);">Ready</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">
+                        🚀 快速命令：
+                    </div>
+                    <div class="code-block">
+                        <code id="quick-cmd">kubectl get pods -A</code>
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 网络配置卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🌐</span>
+                    <div>
+                        <div class="card-title">网络配置</div>
+                        <div class="card-subtitle">NETWORK CONFIG</div>
+                    </div>
+                </div>
+
+                <div style="color: var(--text-normal); line-height: 1.8;">
+                    <p style="margin-bottom: 15px;">
+                        <strong style="color: var(--text-primary);">域名解析配置：</strong>
+                    </p>
+                    <div class="code-block">
+                        <code># Windows hosts 文件
+C:\Windows\System32\drivers\etc\hosts
+
+172.17.247.87 local.gateway.com
+172.17.247.87 local.dashboard.com
+172.17.247.87 local.wiki.com</code>
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-green);">
+                        <strong style="color: var(--accent-green);">✓ 配置完成</strong><br>
+                        <span style="font-size: 0.9rem; opacity: 0.8;">
+                            当前可通过域名访问所有服务
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 帮助信息卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📚</span>
+                    <div>
+                        <div class="card-title">使用帮助</div>
+                        <div class="card-subtitle">HELP & INFO</div>
+                    </div>
+                </div>
+
+                <div style="color: var(--text-normal); line-height: 2;">
+                    <p><span style="color: var(--text-primary);">1.</span> 确保 Windows hosts 文件已配置</p>
+                    <p><span style="color: var(--text-primary);">2.</span> Dashboard 使用 Token 方式登录</p>
+                    <p><span style="color: var(--text-primary);">3.</span> 接受自签名证书继续访问</p>
+                    <p><span style="color: var(--text-primary);">4.</span> 所有服务通过 Ingress 统一入口</p>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <a href="https://local.dashboard.com:8443/" target="_blank" class="service-link" style="text-align: center;">
+                            <span style="color: var(--text-primary); font-weight: 600;">
+                                🚀 直接进入 Dashboard
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-text">
+                <p>K8s 本地开发环境 | Kind + Ingress + Dashboard + OpenDeepWiki</p>
+                <p style="margin-top: 10px; opacity: 0.7;">
+                    部署时间: <span id="deploy-time"></span> |
+                    系统运行正常
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 主题切换
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                icon.textContent = '☀️';
+                text.textContent = '阳光模式';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                icon.textContent = '🌙';
+                text.textContent = '暗色模式';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // 加载保存的主题
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'light') {
+            document.getElementById('theme-icon').textContent = '☀️';
+            document.getElementById('theme-text').textContent = '阳光模式';
+        }
+
+        // 显示 Toast 提示
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 复制代码功能（含兼容性回退）
+        function copyCode(btn) {
+            const codeEl = btn.previousElementSibling;
+            const code = codeEl.innerText;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showCopySuccess(btn);
+                    showToast('✓ 已复制到剪贴板');
+                }).catch(() => {
+                    fallbackCopy(code, btn);
+                });
+            } else {
+                fallbackCopy(code, btn);
+            }
+        }
+
+        function fallbackCopy(text, btn) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, text.length);
+            try {
+                document.execCommand('copy');
+                showCopySuccess(btn);
+                showToast('✓ 已复制到剪贴板');
+            } catch (err) {
+                btn.textContent = '复制失败';
+                showToast('✗ 复制失败，请手动复制');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopySuccess(btn) {
+            const original = btn.textContent;
+            btn.textContent = '已复制!';
+            btn.style.background = 'var(--accent-green)';
+            btn.style.borderColor = 'var(--accent-green)';
+            btn.style.color = '#000';
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.style.background = '';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }, 2000);
+        }
+
+        // 显示部署时间
+        document.getElementById('deploy-time').textContent = new Date().toLocaleString('zh-CN');
+    </script>
+</body>
+</html>

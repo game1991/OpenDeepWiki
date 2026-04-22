@@ -1,0 +1,32 @@
+apiVersion: v2
+name: opendeepwiki
+description: A Helm chart for OpenDeepWiki - AI-Driven Code Knowledge Base
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - opendeepwiki
+  - ai
+  - knowledge-base
+  - documentation
+  - code-analysis
+maintainers:
+  - name: OpenDeepWiki Team
+    email: support@opendeepwiki.com
+sources:
+  - https://github.com/AIDotNet/OpenDeepWiki
+# 数据库依赖（可选）
+# 注意：使用 SQLite 时不需要，如需 MySQL/PostgreSQL 请取消注释
+# dependencies:
+#   - name: mysql
+#     version: 9.x.x
+#     repository: oci://registry-1.docker.io/bitnamicharts
+#     condition: mysql.enabled
+#     tags:
+#       - database
+#   - name: postgresql
+#     version: 13.x.x
+#     repository: oci://registry-1.docker.io/bitnamicharts
+#     condition: postgresql.enabled
+#     tags:
+#       - database
