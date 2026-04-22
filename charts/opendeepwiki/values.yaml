@@ -40,15 +40,18 @@ backend:
     Database__Type: sqlite
     ConnectionStrings__Default: Data Source=/data/opendeepwiki.db
     REPOSITORIES_DIRECTORY: /data
-    # AI 配置
-    ENDPOINT: https://api.openai.com/v1
+    # AI 配置 - 金山云星源平台 kimi-k2.5
+    ENDPOINT: https://kspmas.ksyun.com/v1
     CHAT_REQUEST_TYPE: OpenAI
-    WIKI_CATALOG_MODEL: gpt-4o
-    WIKI_CATALOG_ENDPOINT: https://api.openai.com/v1
+    CHAT_REQUEST_MODEL_ID: kimi-k2.5
+    WIKI_CATALOG_MODEL: kimi-k2.5
+    WIKI_CATALOG_ENDPOINT: https://kspmas.ksyun.com/v1
     WIKI_CATALOG_REQUEST_TYPE: OpenAI
-    WIKI_CONTENT_MODEL: gpt-4o
-    WIKI_CONTENT_ENDPOINT: https://api.openai.com/v1
+    WIKI_CONTENT_MODEL: kimi-k2.5
+    WIKI_CONTENT_ENDPOINT: https://kspmas.ksyun.com/v1
     WIKI_CONTENT_REQUEST_TYPE: OpenAI
+    CONTENT_REQUEST_MODEL_ID: kimi-k2.5
+    CATALOG_REQUEST_MODEL_ID: kimi-k2.5
     WIKI_PARALLEL_COUNT: "5"
     WIKI_LANGUAGES: "en,zh"
 
