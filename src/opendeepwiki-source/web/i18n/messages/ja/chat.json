@@ -1,0 +1,71 @@
+{
+  "assistant": {
+    "title": "OpenDeepWikiエージェント",
+    "greeting": "👋 こんにちは！OpenDeepWikiエージェントです",
+    "greetingSubtitle": "ドキュメントについてのご質問があればお気軽にお聞きください",
+    "disabled": "エージェント機能は無効です",
+    "noModels": "利用可能なモデルがありません。管理者に連絡してモデルを設定してください",
+    "thinking": "考え中...",
+    "selectModel": "まずモデルを選択してください",
+    "loadConfigFailed": "設定の読み込みに失敗しました。ページを更新して再度お試しください"
+  },
+  "panel": {
+    "clearHistory": "履歴をクリア",
+    "close": "閉じる",
+    "inputPlaceholder": "メッセージを入力し、Enterキーを押して送信...",
+    "uploadImage": "画像をアップロード",
+    "send": "送信",
+    "retry": "再試行",
+    "closeError": "閉じる"
+  },
+  "message": {
+    "thinking": "思考プロセス",
+    "toolCall": "ツール呼び出し",
+    "toolResult": "ツール実行結果",
+    "toolError": "ツール実行失敗",
+    "uploadedImage": "アップロード画像",
+    "quotedFrom": "引用元：",
+    "currentPage": "現在のページ",
+    "tokens": "トークン",
+    "inputTokens": "入力",
+    "outputTokens": "出力"
+  },
+  "image": {
+    "upload": "画像をアップロード",
+    "supportedFormats": "PNG、JPG、GIF、WebPに対応。1画像あたり最大10MB、最大{maxImages}枚",
+    "unsupportedFormat": "PNG、JPG、GIF、WebP形式のみサポートされています",
+    "sizeTooLarge": "画像サイズは10MBを超えることはできません",
+    "preview": "プレビュー {index}",
+    "remove": "画像を削除 {index}",
+    "invalidFormat": "無効なBase64画像形式です",
+    "readFailed": "ファイルの読み込みに失敗しました"
+  },
+  "error": {
+    "chatFailed": "チャットに失敗しました。もう一度お試しください",
+    "configMissing": "設定がありません",
+    "modelUnavailable": "モデルが利用できません",
+    "requestTimeout": "リクエストがタイムアウトしました。もう一度お試しください",
+    "connectionFailed": "接続に失敗しました。ネットワークを確認してください",
+    "sendFailed": "送信に失敗しました。もう一度お試しください",
+    "loadConfigFailed": "設定の読み込みに失敗しました",
+    "noResponse": "レスポンスを読み込めません"
+  },
+  "embed": {
+    "title": "チャットアシスタント",
+    "greeting": "👋 こんにちは！",
+    "greetingSubtitle": "何かお手伝いできることはありますか？",
+    "inputPlaceholder": "メッセージを入力...",
+    "configInvalid": "設定の検証に失敗しました",
+    "loadConfigFailed": "設定の読み込みに失敗しました"
+  },
+  "model": {
+    "selector": "モデルを選択",
+    "noModels": "利用可能なモデルがありません",
+    "provider": "プロバイダー"
+  },
+  "quote": {
+    "icon": "📎",
+    "label": "引用元：",
+    "remove": "引用を削除"
+  }
+}

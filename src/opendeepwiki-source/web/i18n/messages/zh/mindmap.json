@@ -1,0 +1,25 @@
+{
+  "title": "项目架构",
+  "description": "{owner}/{repo} 的项目架构思维导图，展示核心模块和文件结构",
+  "loading": "正在生成项目架构思维导图",
+  "loadingDescription": "AI 正在分析项目结构，请稍候...",
+  "failed": "思维导图生成失败",
+  "failedDescription": "请尝试重新生成仓库文档",
+  "empty": "暂无思维导图",
+  "emptyDescription": "该仓库尚未生成项目架构思维导图",
+  "emptyContent": "思维导图内容为空",
+  "error": "无法加载思维导图",
+  "errorDescription": "请稍后重试或检查仓库是否存在",
+  "toolbar": {
+    "mindmap": "思维导图",
+    "list": "列表视图",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "reset": "重置"
+  },
+  "tips": {
+    "expand": "点击节点展开/折叠",
+    "link": "点击文件路径跳转到源代码",
+    "scroll": "滚轮缩放"
+  }
+}

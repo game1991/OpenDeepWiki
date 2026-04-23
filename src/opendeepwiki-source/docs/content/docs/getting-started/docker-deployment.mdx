@@ -1,0 +1,175 @@
+---
+title: Docker 部署
+description: OpenDeepWiki 的详细 Docker 部署指南，包括特定架构的构建和生产配置。
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Docker 部署
+
+本指南涵盖了超出 [快速开始](/docs/getting-started) 范围的高级 Docker 部署场景。
+
+## Docker Compose 概览
+
+项目根目录的 `compose.yaml` 定义了两个服务：
+
+| 服务 | 镜像 | 端口 | 描述 |
+|---|---|---|---|
+| `opendeepwiki` | 后端 API 镜像 | `8080` | 带有 AI 处理的 ASP.NET Core API |
+| `web` | 前端镜像 | `3000` | Next.js 前端应用 |
+
+前端依赖于后端，并在其健康检查通过后才启动。
+
+## 构建镜像
+
+### 构建所有镜像
+
+```bash
+docker-compose build
+```
+
+### 特定架构构建
+
+为特定 CPU 架构构建：
+
+```bash
+# ARM64（Apple Silicon、AWS Graviton 等）
+docker-compose build --build-arg ARCH=arm64
+
+# AMD64（Intel/AMD x86_64）
+docker-compose build --build-arg ARCH=amd64
+```
+
+### 构建单个服务
+
+```bash
+# 仅后端
+docker-compose build opendeepwiki
+
+# 仅前端
+docker-compose build web
+```
+
+如果已安装 `make`，可以使用简写命令：
+
+```bash
+make build          # 构建全部
+make build-arm      # ARM 架构
+make build-amd      # AMD 架构
+```
+
+## 生产环境运行
+
+### 后台启动
+
+```bash
+docker-compose up -d
+```
+
+### 查看日志
+
+```bash
+docker-compose logs -f
+```
+
+### 停止服务
+
+```bash
+docker-compose down
+```
+
+## 数据持久化
+
+后端将数据存储在映射到 `./data` 的 Docker 卷中：
+
+```yaml
+volumes:
+  - ./data:/data
+```
+
+此目录包含：
+- SQLite 数据库文件（如果使用 SQLite）
+- 用于分析的克隆仓库文件
+
+<Callout type="warn">
+  在生产环境中定期备份 `./data` 目录。它包含所有生成的文档和仓库数据。
+</Callout>
+
+## 健康检查
+
+后端包含内置的健康检查：
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 15s
+```
+
+前端服务在此健康检查通过后才启动，确保 API 已准备好。
+
+## 数据库配置
+
+### SQLite（默认）
+
+无需额外设置。数据库文件会自动创建：
+
+```yaml
+environment:
+  - DB_TYPE=sqlite
+  - CONNECTION_STRING=Data Source=/data/opendeepwiki.db
+```
+
+### PostgreSQL
+
+对于生产工作负载，推荐使用 PostgreSQL：
+
+```yaml
+environment:
+  - DB_TYPE=postgresql
+  - CONNECTION_STRING=Host=your-db-host;Database=opendeepwiki;Username=postgres;Password=your-password
+```
+
+详见 [数据库配置](/docs/deployment/database)。
+
+## AI 提供商配置
+
+OpenDeepWiki 为不同任务使用三个独立的 AI 配置：
+
+| 配置组 | 用途 | 关键变量 |
+|---|---|---|
+| 聊天 | 对话式 AI 功能 | `CHAT_API_KEY`、`ENDPOINT`、`CHAT_REQUEST_TYPE` |
+| Wiki 目录 | 生成文档结构 | `WIKI_CATALOG_MODEL`、`WIKI_CATALOG_ENDPOINT`、`WIKI_CATALOG_API_KEY` |
+| Wiki 内容 | 生成文档内容 | `WIKI_CONTENT_MODEL`、`WIKI_CONTENT_ENDPOINT`、`WIKI_CONTENT_API_KEY` |
+
+所有三个都可以指向同一提供商，或者为每个任务使用不同的模型/提供商。
+
+详见 [AI 提供商](/docs/deployment/ai-providers)。
+
+## 一键部署
+
+### Sealos
+
+一键部署 OpenDeepWiki 到 Sealos：
+
+[![Deploy on Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://bja.sealos.run/?openapp=system-template%3FtemplateName%3DOpenDeepWiki)
+
+## 故障排除
+
+### 后端启动失败
+
+- 检查 AI API 密钥是否有效且端点可达
+- 验证 `CONNECTION_STRING` 对你的数据库类型是否正确
+- 查看日志：`docker-compose logs opendeepwiki`
+
+### 前端显示连接错误
+
+- 确保后端健康检查通过：`docker-compose ps`
+- `web` 服务中的 `API_PROXY_URL` 应指向后端容器：`http://opendeepwiki:8080`
+
+### 磁盘空间不足
+
+- 克隆的仓库存储在 `./data` 中。通过 web UI 或 API 清理旧仓库
+- 如果使用 SQLite，数据库文件会随时间增长。对于大型部署，考虑切换到 PostgreSQL

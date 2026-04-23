@@ -1,0 +1,178 @@
+---
+title: 环境变量
+description: 用于配置 OpenDeepWiki 后端和前端服务的所有环境变量的完整参考。
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+# 环境变量
+
+本页提供 OpenDeepWiki 支持的所有环境变量的完整参考。变量可以通过 Docker Compose `environment` 部分、项目根目录的 `.env` 文件或系统环境变量设置。
+
+<Callout type="info">
+  环境变量优先于 `appsettings.json` 中的值。
+</Callout>
+
+## 数据库
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `DB_TYPE` | 否 | `sqlite` | 数据库后端类型。支持的值：`sqlite`、`postgresql` |
+| `CONNECTION_STRING` | 否 | `Data Source=/data/opendeepwiki.db` | 数据库连接字符串。格式取决于 `DB_TYPE` |
+
+对于 PostgreSQL，使用 Npgsql 连接字符串格式：
+
+```
+Host=<host>;Port=5432;Database=opendeepwiki;Username=<user>;Password=<password>
+```
+
+详见 [数据库配置](/docs/deployment/database)。
+
+## JWT 认证
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `JWT_SECRET_KEY` | 是（生产环境） | 内置开发密钥 | 用于 JWT 令牌的 HMAC-SHA256 签名密钥。生产环境必须更改 |
+
+<Callout type="warn">
+  默认 JWT 密钥仅用于开发。在生产环境中始终设置强大、唯一的 `JWT_SECRET_KEY`。
+</Callout>
+
+JWT 发行者、受众和过期时间通过 `appsettings.json` 的 `Jwt` 部分配置：
+
+```json
+{
+  "Jwt": {
+    "Issuer": "OpenDeepWiki",
+    "Audience": "OpenDeepWiki",
+    "ExpirationMinutes": 1440
+  }
+}
+```
+
+## AI 服务（聊天）
+
+这些变量配置用于聊天和对话功能的 AI 服务。
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `CHAT_API_KEY` | 是 | — | 聊天 AI 服务的 API 密钥 |
+| `ENDPOINT` | 是 | `https://api.routin.ai/v1` | 聊天 AI 服务端点 URL |
+| `CHAT_REQUEST_TYPE` | 否 | `OpenAI` | AI 提供商类型：`OpenAI`、`AzureOpenAI`、`Anthropic`、`OpenAIResponses` |
+
+## Wiki 生成 — 目录
+
+这些变量配置用于生成文档目录（目录）结构的 AI 模型。
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `WIKI_CATALOG_MODEL` | 否 | `gpt-4o` | 目录生成的模型名称 |
+| `WIKI_CATALOG_ENDPOINT` | 是 | — | 目录生成的 API 端点 |
+| `WIKI_CATALOG_API_KEY` | 是 | — | 目录生成的 API 密钥 |
+| `WIKI_CATALOG_REQUEST_TYPE` | 否 | `OpenAI` | 提供商类型：`OpenAI`、`AzureOpenAI`、`Anthropic`、`OpenAIResponses` |
+
+## Wiki 生成 — 内容
+
+这些变量配置用于生成文档页面内容的 AI 模型。
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `WIKI_CONTENT_MODEL` | 否 | `gpt-4o` | 内容生成的模型名称 |
+| `WIKI_CONTENT_ENDPOINT` | 是 | — | 内容生成的 API 端点 |
+| `WIKI_CONTENT_API_KEY` | 是 | — | 内容生成的 API 密钥 |
+| `WIKI_CONTENT_REQUEST_TYPE` | 否 | `OpenAI` | 提供商类型：`OpenAI`、`AzureOpenAI`、`Anthropic`、`OpenAIResponses` |
+
+## Wiki 生成 — 翻译（可选）
+
+翻译配置是可选的。如果未设置，系统将回退到 wiki 内容配置。
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `WIKI_TRANSLATION_MODEL` | 否 | 与 `WIKI_CONTENT_MODEL` 相同 | 翻译的模型名称 |
+| `WIKI_TRANSLATION_ENDPOINT` | 否 | 与 `WIKI_CONTENT_ENDPOINT` 相同 | 翻译的 API 端点 |
+| `WIKI_TRANSLATION_API_KEY` | 否 | 与 `WIKI_CONTENT_API_KEY` 相同 | 翻译的 API 密钥 |
+| `WIKI_TRANSLATION_REQUEST_TYPE` | 否 | 与 `WIKI_CONTENT_REQUEST_TYPE` 相同 | 提供商类型 |
+
+## Wiki 生成 — 常规
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `WIKI_PARALLEL_COUNT` | 否 | `5` | 并行文档生成任务数。更高的值加快生成但使用更多资源 |
+| `WIKI_LANGUAGES` | 否 | `en,zh` | 多语言 wiki 生成的目标语言逗号分隔列表（例如 `en,zh,ja,ko`） |
+| `REPOSITORIES_DIRECTORY` | 否 | `/data` | 用于存储克隆仓库文件的目录 |
+| `WIKI_MAX_OUTPUT_TOKENS` | 否 | `32000` | 单次 AI 生成的最大输出 Token 数，防止回复过长 |
+| `WIKI_DOCUMENT_GENERATION_TIMEOUT_MINUTES` | 否 | `60` | 单篇文档生成任务的超时时间（分钟） |
+| `WIKI_TRANSLATION_TIMEOUT_MINUTES` | 否 | `45` | 翻译任务允许的最长执行时间（分钟） |
+| `WIKI_TITLE_TRANSLATION_TIMEOUT_MINUTES` | 否 | `2` | 目录标题翻译的超时时间（分钟） |
+| `WIKI_README_MAX_LENGTH` | 否 | `4000` | README 摘要在生成前的最大字符长度 |
+| `WIKI_DIRECTORY_TREE_MAX_DEPTH` | 否 | `2` | 扫描仓库目录结构时的最大深度 |
+| `WIKI_MAX_RETRY_ATTEMPTS` | 否 | `3` | 调用 AI 接口失败时的最大重试次数 |
+| `WIKI_RETRY_DELAY_MS` | 否 | `1000` | AI 调用重试之间的等待时间（毫秒） |
+| `WIKI_PROMPTS_DIRECTORY` | 否 | `prompts` | 自定义 wiki 生成提示模板所在目录 |
+
+## 增量更新
+
+这些设置通过 `appsettings.json` 的 `IncrementalUpdate` 部分配置。它们控制检查仓库更新的后台工作者。
+
+| 设置 | 默认值 | 描述 |
+|---|---|---|
+| `IncrementalUpdate:PollingIntervalSeconds` | `60` | 工作者检查待处理更新任务的频率（秒） |
+| `IncrementalUpdate:DefaultUpdateIntervalMinutes` | `60` | 仓库更新检查之间的默认间隔（分钟） |
+| `IncrementalUpdate:MinUpdateIntervalMinutes` | `5` | 允许的最小更新间隔（分钟） |
+| `IncrementalUpdate:MaxRetryAttempts` | `3` | 失败更新的最大重试次数 |
+| `IncrementalUpdate:RetryBaseDelayMs` | `1000` | 重试之间的基础延迟（毫秒），使用指数退避 |
+| `IncrementalUpdate:ManualTriggerPriority` | `100` | 手动触发的更新任务的优先级值 |
+
+## 功能标志
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `MCP_STREAMABLE` | 否 | — | 为外部 AI 服务配置 MCP Streamable HTTP 端点。格式：`serviceName=url,serviceName2=url2` |
+
+详见 [MCP 协议](/docs/mcp)。
+
+## ASP.NET Core 运行时
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `ASPNETCORE_ENVIRONMENT` | 否 | `Production` | 运行时环境：`Development`、`Staging`、`Production` |
+| `URLS` | 否 | `http://+:8080` | 服务器监听地址和端口 |
+
+## 前端（Web）
+
+这些变量配置 Next.js 前端应用。
+
+| 变量 | 必需 | 默认值 | 描述 |
+|---|---|---|---|
+| `NODE_ENV` | 否 | `production` | Node.js 环境模式 |
+| `API_PROXY_URL` | 是 | `http://localhost:5265` | 前端代理的后端 API URL。在 Docker 中，使用服务名称：`http://opendeepwiki:8080` |
+
+## 示例：最小 `.env` 文件
+
+```bash
+# 数据库
+DB_TYPE=sqlite
+CONNECTION_STRING=Data Source=/data/opendeepwiki.db
+
+# JWT（生产环境需更改！）
+JWT_SECRET_KEY=your-strong-secret-key-here
+
+# AI 服务
+CHAT_API_KEY=sk-your-api-key
+ENDPOINT=https://api.openai.com/v1
+
+# Wiki 生成
+WIKI_CATALOG_MODEL=gpt-4o
+WIKI_CATALOG_ENDPOINT=https://api.openai.com/v1
+WIKI_CATALOG_API_KEY=sk-your-api-key
+WIKI_CONTENT_MODEL=gpt-4o
+WIKI_CONTENT_ENDPOINT=https://api.openai.com/v1
+WIKI_CONTENT_API_KEY=sk-your-api-key
+
+# 多语言
+WIKI_LANGUAGES=en,zh
+```
+
+<Callout type="info">
+  OpenDeepWiki 在启动时自动从项目根目录或应用目录加载 `.env` 文件。无需额外配置。
+</Callout>

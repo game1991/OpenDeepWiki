@@ -1,0 +1,442 @@
+apiVersion: app.sealos.io/v1
+kind: Template
+metadata:
+  name: OpenDeepWiki
+spec:
+  title: 'OpenDeepWiki'
+  url: 'https://opendeep.wiki'
+  gitRepo: 'https://github.com/AIDotNet/OpenDeepWiki'
+  author: 'AIDotNet'
+  description: 'OpenDeepWiki 是基于 .NET 9 和 Semantic Kernel 开发的开源项目，提供代码分析、文档生成、知识图谱等功能，帮助开发者更好地理解和使用代码库。'
+  readme: 'https://raw.githubusercontent.com/AIDotNet/OpenDeepWiki/refs/heads/main/README.zh-CN.md'
+  icon: 'https://opendeep.wiki/logo.png'
+  templateType: inline
+  defaults:
+    web_port_name:
+      type: string
+      value: ${{ random(12) }}
+    api_port_name:
+      type: string
+      value: ${{ random(12) }}
+    app_host:
+      type: string
+      value: ${{ random(12) }}
+    app_name:
+      type: string
+      value: opendeepwiki-${{ random(8) }}
+    web_host:
+      type: string
+      value: ${{ random(12) }}
+    web_name:
+      type: string
+      value: opendeepwiki-web-${{ random(8) }}
+    default_model:
+      type: string
+      value: gpt-4o
+    default_endpoint:
+      type: string
+      value: https://api.openai.com/v1
+  inputs:
+    # 数据库配置
+    db_type:
+      description: '数据库类型 (sqlite 或 postgresql)'
+      type: string
+      default: 'sqlite'
+      required: true
+    connection_string:
+      description: '数据库连接字符串'
+      type: string
+      default: 'Data Source=/data/opendeepwiki.db'
+      required: true
+    
+    # JWT 配置
+    jwt_secret_key:
+      description: 'JWT 密钥（生产环境请务必修改）'
+      type: string
+      default: 'OpenDeepWiki-Default-Secret-Key-Please-Change-In-Production-Environment-2024'
+      required: true
+    
+    # 全局 AI 配置（用于 Chat 等功能）
+    chat_api_key:
+      description: 'Chat API Key'
+      type: string
+      default: ''
+      required: true
+    chat_endpoint:
+      description: 'Chat API 端点'
+      type: string
+      default: ${{ defaults.default_endpoint }}
+      required: true
+    chat_request_type:
+      description: 'Chat 请求类型 (OpenAI/AzureOpenAI)'
+      type: string
+      default: 'OpenAI'
+      required: true
+    
+    # Wiki 目录生成配置
+    wiki_catalog_model:
+      description: 'Wiki 目录生成模型'
+      type: string
+      default: ${{ defaults.default_model }}
+      required: true
+    wiki_catalog_endpoint:
+      description: 'Wiki 目录生成 API 端点'
+      type: string
+      default: ${{ defaults.default_endpoint }}
+      required: true
+    wiki_catalog_api_key:
+      description: 'Wiki 目录生成 API Key'
+      type: string
+      default: ''
+      required: true
+    wiki_catalog_request_type:
+      description: 'Wiki 目录请求类型 (OpenAI/AzureOpenAI)'
+      type: string
+      default: 'OpenAI'
+      required: true
+    
+    # Wiki 内容生成配置
+    wiki_content_model:
+      description: 'Wiki 内容生成模型'
+      type: string
+      default: ${{ defaults.default_model }}
+      required: true
+    wiki_content_endpoint:
+      description: 'Wiki 内容生成 API 端点'
+      type: string
+      default: ${{ defaults.default_endpoint }}
+      required: true
+    wiki_content_api_key:
+      description: 'Wiki 内容生成 API Key'
+      type: string
+      default: ''
+      required: true
+    wiki_content_request_type:
+      description: 'Wiki 内容请求类型 (OpenAI/AzureOpenAI)'
+      type: string
+      default: 'OpenAI'
+      required: true
+    
+    # Wiki 生成配置
+    wiki_parallel_count:
+      description: 'Wiki 生成并行数'
+      type: string
+      default: '5'
+      required: true
+    wiki_languages:
+      description: '支持的语言（逗号分隔，如: en,zh,ja,ko）'
+      type: string
+      default: 'en,zh'
+      required: true
+    
+    # 存储配置
+    volume_size_data:
+      description: '数据存储容量 (Gi)'
+      type: string
+      default: '5'
+      required: true
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${{ defaults.app_name }}
+  annotations:
+    originImageName: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki
+    deploy.cloud.sealos.io/minReplicas: '1'
+    deploy.cloud.sealos.io/maxReplicas: '1'
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}
+    app: ${{ defaults.app_name }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  minReadySeconds: 10
+  serviceName: ${{ defaults.app_name }}
+  selector:
+    matchLabels:
+      app: ${{ defaults.app_name }}
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+  template:
+    metadata:
+      labels:
+        app: ${{ defaults.app_name }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: ${{ defaults.app_name }}
+          image: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki
+          env:
+            # ASP.NET Core 环境
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: URLS
+              value: http://+:8080
+            
+            # 数据库配置
+            - name: DB_TYPE
+              value: ${{ inputs.db_type }}
+            - name: CONNECTION_STRING
+              value: ${{ inputs.connection_string }}
+            
+            # JWT 认证配置
+            - name: JWT_SECRET_KEY
+              value: ${{ inputs.jwt_secret_key }}
+            
+            # 仓库存储目录
+            - name: REPOSITORIES_DIRECTORY
+              value: /data
+            
+            # AI 服务配置（全局默认，用于 Chat 等功能）
+            - name: CHAT_API_KEY
+              value: ${{ inputs.chat_api_key }}
+            - name: ENDPOINT
+              value: ${{ inputs.chat_endpoint }}
+            - name: CHAT_REQUEST_TYPE
+              value: ${{ inputs.chat_request_type }}
+            
+            # Wiki 生成器配置 - 目录生成
+            - name: WIKI_CATALOG_MODEL
+              value: ${{ inputs.wiki_catalog_model }}
+            - name: WIKI_CATALOG_ENDPOINT
+              value: ${{ inputs.wiki_catalog_endpoint }}
+            - name: WIKI_CATALOG_API_KEY
+              value: ${{ inputs.wiki_catalog_api_key }}
+            - name: WIKI_CATALOG_REQUEST_TYPE
+              value: ${{ inputs.wiki_catalog_request_type }}
+            
+            # Wiki 生成器配置 - 内容生成
+            - name: WIKI_CONTENT_MODEL
+              value: ${{ inputs.wiki_content_model }}
+            - name: WIKI_CONTENT_ENDPOINT
+              value: ${{ inputs.wiki_content_endpoint }}
+            - name: WIKI_CONTENT_API_KEY
+              value: ${{ inputs.wiki_content_api_key }}
+            - name: WIKI_CONTENT_REQUEST_TYPE
+              value: ${{ inputs.wiki_content_request_type }}
+            
+            # Wiki 生成配置
+            - name: WIKI_PARALLEL_COUNT
+              value: ${{ inputs.wiki_parallel_count }}
+            - name: WIKI_LANGUAGES
+              value: ${{ inputs.wiki_languages }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2048Mi
+          ports:
+            - containerPort: 8080
+              name: ${{ defaults.api_port_name }}
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: vn-data
+              mountPath: /data
+      volumes: []
+  volumeClaimTemplates:
+    - metadata:
+        annotations:
+          path: /data
+          value: '5'
+        name: vn-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: ${{ inputs.volume_size_data }}Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ defaults.app_name }}
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: ${{ defaults.api_port_name }}
+    protocol: TCP
+  selector:
+    app: ${{ defaults.app_name }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${{ defaults.app_name }}
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}
+    cloud.sealos.io/app-deploy-manager-domain: ${{ defaults.app_host }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 32m
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '300'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      client_header_buffer_size 64k;
+      large_client_header_buffers 4 128k;
+spec:
+  rules:
+    - host: ${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: ${{ defaults.app_name }}
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - ${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      secretName: ${{ SEALOS_CERT_SECRET_NAME }}
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ defaults.web_name }}
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.web_name }}
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: ${{ defaults.web_port_name }}
+    protocol: TCP
+  selector:
+    app: ${{ defaults.web_name }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ defaults.web_name }}
+  annotations:
+    originImageName: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki-web
+    deploy.cloud.sealos.io/minReplicas: '1'
+    deploy.cloud.sealos.io/maxReplicas: '1'
+  labels:
+    app: ${{ defaults.web_name }}
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.web_name }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ${{ defaults.web_name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: ${{ defaults.web_name }}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: ${{ defaults.web_name }}
+          image: crpi-j9ha7sxwhatgtvj4.cn-shenzhen.personal.cr.aliyuncs.com/open-deepwiki/opendeepwiki-web
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: API_PROXY_URL
+              value: http://${{ defaults.app_name }}:8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          ports:
+            - containerPort: 3000
+              name: ${{ defaults.web_port_name }}
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts: []
+      volumes: []
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${{ defaults.web_name }}
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.web_name }}
+    cloud.sealos.io/app-deploy-manager-domain: ${{ defaults.web_host }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 32m
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '300'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      client_header_buffer_size 64k;
+      large_client_header_buffers 4 128k;
+spec:
+  rules:
+    - host: ${{ defaults.web_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: ${{ defaults.web_name }}
+                port:
+                  number: 3000
+  tls:
+    - hosts:
+        - ${{ defaults.web_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      secretName: ${{ SEALOS_CERT_SECRET_NAME }}

@@ -1,0 +1,22 @@
+{
+  "title": "个人资料",
+  "description": "管理你的个人信息",
+  "name": "用户名",
+  "email": "邮箱",
+  "phone": "手机号",
+  "phonePlaceholder": "可选",
+  "avatarUrl": "头像链接",
+  "updateSuccess": "资料更新成功",
+  "updateFailed": "更新失败",
+  "nameRequired": "用户名不能为空",
+  "changePassword": "修改密码",
+  "passwordDescription": "定期更换密码以保护账户安全",
+  "currentPassword": "当前密码",
+  "newPassword": "新密码",
+  "confirmPassword": "确认新密码",
+  "passwordPlaceholder": "至少6位字符",
+  "passwordChanged": "密码修改成功",
+  "passwordChangeFailed": "密码修改失败",
+  "passwordMismatch": "两次密码输入不一致",
+  "passwordTooShort": "密码长度至少6位"
+}

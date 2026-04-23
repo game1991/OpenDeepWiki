@@ -1,0 +1,25 @@
+{
+  "title": "Project Architecture",
+  "description": "Mind map showing the core modules and file structure of {owner}/{repo}",
+  "loading": "Generating project architecture mind map",
+  "loadingDescription": "AI is analyzing the project structure, please wait...",
+  "failed": "Mind map generation failed",
+  "failedDescription": "Please try regenerating the repository documentation",
+  "empty": "No mind map available",
+  "emptyDescription": "This repository has not generated a project architecture mind map yet",
+  "emptyContent": "Mind map content is empty",
+  "error": "Unable to load mind map",
+  "errorDescription": "Please try again later or check if the repository exists",
+  "toolbar": {
+    "mindmap": "Mind Map",
+    "list": "List View",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "reset": "Reset"
+  },
+  "tips": {
+    "expand": "Click node to expand/collapse",
+    "link": "Click file path to jump to source code",
+    "scroll": "Scroll to zoom"
+  }
+}

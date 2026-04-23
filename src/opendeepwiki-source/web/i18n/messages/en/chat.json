@@ -1,0 +1,95 @@
+{
+  "assistant": {
+    "title": "OpenDeepWiki Agent",
+    "greeting": "👋 Hello! I'm OpenDeepWiki Agent",
+    "greetingSubtitle": "Feel free to ask me any questions about the documentation",
+    "disabled": "Agent is disabled",
+    "noModels": "No available models. Please contact the administrator to configure models",
+    "thinking": "Thinking...",
+    "selectModel": "Please select a model first",
+    "loadConfigFailed": "Failed to load configuration. Please refresh and try again"
+  },
+  "panel": {
+    "clearHistory": "Clear History",
+    "close": "Close",
+    "inputPlaceholder": "Type a message, press Enter to send...",
+    "uploadImage": "Upload Image",
+    "send": "Send",
+    "retry": "Retry",
+    "closeError": "Close",
+    "shareConversation": "Share current conversation",
+    "shareNoMessages": "No conversation available to share",
+    "shareSelectModel": "Select a model first",
+    "shareFailed": "Failed to share the conversation. Please try again.",
+    "shareDialogTitle": "Share current conversation",
+    "shareDialogDescription": "Generate a read-only link to share a snapshot of this conversation.",
+    "shareLink": "Share link",
+    "shareId": "Share ID",
+    "copied": "Copied",
+    "copyLink": "Copy Link",
+    "openSharePage": "Open Share Page",
+    "shareTitle": "Share title",
+    "shareTitlePlaceholder": "Give this share a title",
+    "shareDescription": "Description (optional)",
+    "shareDescriptionPlaceholder": "Add context for viewers",
+    "shareExpiration": "Expiration (minutes)",
+    "shareExpirationHint": "Default is 7 days, maximum is 30 days.",
+    "generateShareLink": "Generate Share Link",
+    "generating": "Generating..."
+  },
+  "message": {
+    "thinking": "Thinking Process",
+    "toolCall": "Tool Call",
+    "toolResult": "Tool Result",
+    "toolError": "Tool Execution Failed",
+    "uploadedImage": "Uploaded Image",
+    "quotedFrom": "Quoted from:",
+    "currentPage": "Current Page",
+    "tokens": "tokens",
+    "inputTokens": "input",
+    "outputTokens": "output"
+  },
+  "image": {
+    "upload": "Upload Image",
+    "supportedFormats": "Supports PNG, JPG, GIF, WebP. Max 10MB per image, up to {maxImages} images",
+    "unsupportedFormat": "Only PNG, JPG, GIF, WebP formats are supported",
+    "sizeTooLarge": "Image size cannot exceed 10MB",
+    "preview": "Preview {index}",
+    "remove": "Remove Image {index}",
+    "invalidFormat": "Invalid Base64 image format",
+    "readFailed": "Failed to read file"
+  },
+  "error": {
+    "chatFailed": "Chat failed. Please try again",
+    "configMissing": "Configuration missing",
+    "modelUnavailable": "Model unavailable",
+    "requestTimeout": "Request timeout. Please try again",
+    "connectionFailed": "Connection failed. Please check your network",
+    "sendFailed": "Failed to send. Please try again",
+    "loadConfigFailed": "Failed to load configuration",
+    "noResponse": "Unable to read response"
+  },
+  "embed": {
+    "title": "Chat Assistant",
+    "greeting": "👋 Hello!",
+    "greetingSubtitle": "How can I help you?",
+    "inputPlaceholder": "Type a message...",
+    "configInvalid": "Configuration validation failed",
+    "loadConfigFailed": "Failed to load configuration"
+  },
+  "model": {
+    "selector": "Select Model",
+    "noModels": "No available models",
+    "provider": "Provider"
+  },
+  "quote": {
+    "icon": "📎",
+    "label": "Quoted from:",
+    "remove": "Remove quote"
+  },
+  "share": {
+    "title": "Chat Share",
+    "messageCount": "{count} chat messages",
+    "empty": "This shared conversation has no messages yet."
+  }
+}
