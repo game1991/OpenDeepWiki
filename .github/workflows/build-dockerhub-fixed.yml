@@ -29,7 +29,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: AIDotNet/OpenDeepWiki
-        ref: master
+        ref: main
 
     # Step 2: 检出我们的修复文件
     - name: Checkout fix files
