@@ -81,8 +81,8 @@ jobs:
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+#        cache-from: type=gha
+#        cache-to: type=gha,mode=max
 
     # Step 7: 构建并推送前端（原版）
     - name: Build and push frontend
@@ -94,8 +94,8 @@ jobs:
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+#        cache-from: type=gha
+#        cache-to: type=gha,mode=max
 
     # Step 8: 输出结果
     - name: Output summary
