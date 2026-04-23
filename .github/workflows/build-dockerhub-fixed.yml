@@ -61,11 +61,12 @@ jobs:
         echo "tag_date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
     # Step 5: 构建并推送后端（使用本地修复源码）
+    # 注意：context 必须是 src/opendeepwiki-source，Dockerfile 路径相对于 context
     - name: Build and push backend (fixed)
       uses: docker/build-push-action@v5
       with:
         context: ./src/opendeepwiki-source
-        file: ./src/opendeepwiki-source/src/OpenDeepWiki/Dockerfile
+        file: ./src/OpenDeepWiki/Dockerfile
         push: true
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}
@@ -76,7 +77,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: ./src/opendeepwiki-source/web
-        file: ./src/opendeepwiki-source/web/Dockerfile
+        file: ./Dockerfile
         push: true
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}
