@@ -19,3 +19,7 @@ minikube-linux-amd64
 
 # 数据目录（如果包含生成的数据）
 data/*.tmp
+
+./*.md
+draft.md
+prod.md
