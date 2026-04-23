@@ -8,7 +8,7 @@ backend:
   replicaCount: 1
 
   image:
-    repository: docker.io/${DOCKER_HUB_USERNAME}/opendeepwiki-backend
+    repository: docker.io/${DOCKER_HUB_USERNAME}/opendeepwiki-backend-fixed
     tag: latest
     pullPolicy: Always
 
