@@ -1,0 +1,114 @@
+name: Build and Push to Docker Hub (with Git Fix)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '镜像版本标签'
+        required: false
+        default: 'latest'
+
+env:
+  DOCKER_HUB_USERNAME: ${DOCKER_HUB_USERNAME}
+  BACKEND_IMAGE: opendeepwiki-backend-fixed
+  FRONTEND_IMAGE: opendeepwiki-web
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    # Step 1: 检出官方源码
+    - name: Checkout OpenDeepWiki official repo
+      uses: actions/checkout@v4
+      with:
+        repository: AIDotNet/OpenDeepWiki
+        ref: master
+
+    # Step 2: 检出我们的修复文件
+    - name: Checkout fix files
+      uses: actions/checkout@v4
+      with:
+        path: fix-files
+
+    # Step 3: 应用修复
+    - name: Apply Git fix
+      run: |
+        echo "应用 Git 克隆修复..."
+        cp fix-files/src/fix/RepositoryAnalyzer.cs \
+           src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs
+        echo "修复已应用"
+
+    # Step 4: 登录 Docker Hub
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    # Step 5: 提取版本信息
+    - name: Extract metadata
+      id: meta
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        INPUT_VERSION: ${{ github.event.inputs.version }}
+        REF_TYPE: ${{ github.ref_type }}
+        GITHUB_REF: ${{ github.ref }}
+      run: |
+        if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          VERSION="$INPUT_VERSION"
+        elif [ "$REF_TYPE" = "tag" ]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION=latest
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag_date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+
+    # Step 6: 构建并推送后端（带修复）
+    - name: Build and push backend (fixed)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./src/OpenDeepWiki/Dockerfile
+        push: true
+        tags: |
+          ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}
+          ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Step 7: 构建并推送前端（原版）
+    - name: Build and push frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./web
+        file: ./web/Dockerfile
+        push: true
+        tags: |
+          ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}
+          ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Step 8: 输出结果
+    - name: Output summary
+      env:
+        VERSION: ${{ steps.meta.outputs.version }}
+      run: |
+        echo "## 构建完成 :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 修复内容" >> $GITHUB_STEP_SUMMARY
+        echo "- 修复 Git 私有仓库克隆问题" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 镜像信息" >> $GITHUB_STEP_SUMMARY
+        echo "| 组件 | 镜像 |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend (Fixed) | \`docker.io/${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:$VERSION\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend | \`docker.io/${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:$VERSION\` |" >> $GITHUB_STEP_SUMMARY
