@@ -24,24 +24,37 @@ jobs:
       packages: write
 
     steps:
-    # Step 1: 检出代码（包含修复的源码）
+    # Step 1: 检出代码
     - name: Checkout code with fix
       uses: actions/checkout@v4
 
-    # Step 2: 验证修复已应用
+    # Step 2: 调试 - 查看文件结构
+    - name: Debug file structure
+      run: |
+        echo "=== 当前目录结构 ==="
+        pwd
+        ls -la
+        echo ""
+        echo "=== src/opendeepwiki-source 目录 ==="
+        ls -la src/opendeepwiki-source/ || echo "目录不存在"
+        echo ""
+        echo "=== 查找 Dockerfile ==="
+        find . -name "Dockerfile" -type f | head -5
+
+    # Step 3: 验证修复
     - name: Verify Git fix
       run: |
         echo "=== 验证 Git 修复 ==="
         grep -n "构建带凭据的 URL" src/opendeepwiki-source/src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs && echo "✅ 修复已验证" || echo "❌ 修复未找到"
 
-    # Step 3: 登录 Docker Hub
+    # Step 4: 登录 Docker Hub
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ env.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    # Step 4: 提取版本信息
+    # Step 5: 提取版本信息
     - name: Extract metadata
       id: meta
       env:
@@ -60,19 +73,18 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag_date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
-    # Step 5: 构建并推送后端（使用本地修复源码）
-    # 注意：context 必须是 src/opendeepwiki-source，Dockerfile 路径相对于 context
+    # Step 6: 构建后端
     - name: Build and push backend (fixed)
       uses: docker/build-push-action@v5
       with:
-        context: ./src/opendeepwiki-source
-        file: ./src/OpenDeepWiki/Dockerfile
+        context: .
+        file: ./src/opendeepwiki-source/src/OpenDeepWiki/Dockerfile
         push: true
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
 
-    # Step 6: 构建并推送前端
+    # Step 7: 构建前端
     - name: Build and push frontend
       uses: docker/build-push-action@v5
       with:
@@ -83,7 +95,7 @@ jobs:
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
 
-    # Step 7: 输出结果
+    # Step 8: 输出结果
     - name: Output summary
       env:
         VERSION: ${{ steps.meta.outputs.version }}
