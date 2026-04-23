@@ -8,7 +8,7 @@ backend:
   replicaCount: 1
 
   image:
-    repository: docker.io/luckystar520/opendeepwiki-backend
+    repository: docker.io/luckystar520/opendeepwiki-backend-fixed
     tag: latest
     pullPolicy: Always
 
