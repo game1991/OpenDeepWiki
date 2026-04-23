@@ -24,35 +24,24 @@ jobs:
       packages: write
 
     steps:
-    # Step 1: 检出官方源码
-    - name: Checkout OpenDeepWiki official repo
+    # Step 1: 检出代码（包含修复的源码）
+    - name: Checkout code with fix
       uses: actions/checkout@v4
-      with:
-        repository: AIDotNet/OpenDeepWiki
-        ref: main
 
-    # Step 2: 检出我们的修复文件
-    - name: Checkout fix files
-      uses: actions/checkout@v4
-      with:
-        path: fix-files
-
-    # Step 3: 应用修复
-    - name: Apply Git fix
+    # Step 2: 验证修复已应用
+    - name: Verify Git fix
       run: |
-        echo "应用 Git 克隆修复..."
-        cp fix-files/src/fix/RepositoryAnalyzer.cs \
-           src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs
-        echo "修复已应用"
+        echo "=== 验证 Git 修复 ==="
+        grep -n "构建带凭据的 URL" src/opendeepwiki-source/src/OpenDeepWiki/Services/Repositories/RepositoryAnalyzer.cs && echo "✅ 修复已验证" || echo "❌ 修复未找到"
 
-    # Step 4: 登录 Docker Hub
+    # Step 3: 登录 Docker Hub
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ env.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    # Step 5: 提取版本信息
+    # Step 4: 提取版本信息
     - name: Extract metadata
       id: meta
       env:
@@ -71,33 +60,29 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag_date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
-    # Step 6: 构建并推送后端（带修复）
+    # Step 5: 构建并推送后端（使用本地修复源码）
     - name: Build and push backend (fixed)
       uses: docker/build-push-action@v5
       with:
-        context: .
-        file: ./src/OpenDeepWiki/Dockerfile
+        context: ./src/opendeepwiki-source
+        file: ./src/opendeepwiki-source/src/OpenDeepWiki/Dockerfile
         push: true
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
-#        cache-from: type=gha
-#        cache-to: type=gha,mode=max
 
-    # Step 7: 构建并推送前端（原版）
+    # Step 6: 构建并推送前端
     - name: Build and push frontend
       uses: docker/build-push-action@v5
       with:
-        context: ./web
-        file: ./web/Dockerfile
+        context: ./src/opendeepwiki-source/web
+        file: ./src/opendeepwiki-source/web/Dockerfile
         push: true
         tags: |
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}
           ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.tag_date }}
-#        cache-from: type=gha
-#        cache-to: type=gha,mode=max
 
-    # Step 8: 输出结果
+    # Step 7: 输出结果
     - name: Output summary
       env:
         VERSION: ${{ steps.meta.outputs.version }}
