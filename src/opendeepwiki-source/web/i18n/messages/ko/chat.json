@@ -1,0 +1,71 @@
+{
+  "assistant": {
+    "title": "OpenDeepWiki 에이전트",
+    "greeting": "👋 안녕하세요! OpenDeepWiki 에이전트입니다",
+    "greetingSubtitle": "문서에 대한 질문이 있으시면 편하게 물어보세요",
+    "disabled": "에이전트가 비활성화되었습니다",
+    "noModels": "사용 가능한 모델이 없습니다. 관리자에게 연락하여 모델을 구성해주세요",
+    "thinking": "생각 중...",
+    "selectModel": "먼저 모델을 선택해주세요",
+    "loadConfigFailed": "설정을 로드하지 못했습니다. 페이지를 새로고침하고 다시 시도해주세요"
+  },
+  "panel": {
+    "clearHistory": "기록 삭제",
+    "close": "닫기",
+    "inputPlaceholder": "메시지를 입력하고 Enter를 눌러 전송...",
+    "uploadImage": "이미지 업로드",
+    "send": "전송",
+    "retry": "재시도",
+    "closeError": "닫기"
+  },
+  "message": {
+    "thinking": "사고 과정",
+    "toolCall": "도구 호출",
+    "toolResult": "도구 실행 결과",
+    "toolError": "도구 실행 실패",
+    "uploadedImage": "업로드된 이미지",
+    "quotedFrom": "인용 출처:",
+    "currentPage": "현재 페이지",
+    "tokens": "토큰",
+    "inputTokens": "입력",
+    "outputTokens": "출력"
+  },
+  "image": {
+    "upload": "이미지 업로드",
+    "supportedFormats": "PNG, JPG, GIF, WebP 지원. 이미지당 최대 10MB, 최대 {maxImages}개",
+    "unsupportedFormat": "PNG, JPG, GIF, WebP 형식만 지원됩니다",
+    "sizeTooLarge": "이미지 크기는 10MB를 초과할 수 없습니다",
+    "preview": "미리보기 {index}",
+    "remove": "이미지 제거 {index}",
+    "invalidFormat": "잘못된 Base64 이미지 형식입니다",
+    "readFailed": "파일을 읽지 못했습니다"
+  },
+  "error": {
+    "chatFailed": "채팅에 실패했습니다. 다시 시도해주세요",
+    "configMissing": "설정이 없습니다",
+    "modelUnavailable": "모델을 사용할 수 없습니다",
+    "requestTimeout": "요청 시간이 초과되었습니다. 다시 시도해주세요",
+    "connectionFailed": "연결에 실패했습니다. 네트워크를 확인해주세요",
+    "sendFailed": "전송에 실패했습니다. 다시 시도해주세요",
+    "loadConfigFailed": "설정을 로드하지 못했습니다",
+    "noResponse": "응답을 읽을 수 없습니다"
+  },
+  "embed": {
+    "title": "채팅 어시스턴트",
+    "greeting": "👋 안녕하세요!",
+    "greetingSubtitle": "무엇을 도와드릴까요?",
+    "inputPlaceholder": "메시지를 입력...",
+    "configInvalid": "설정 검증에 실패했습니다",
+    "loadConfigFailed": "설정을 로드하지 못했습니다"
+  },
+  "model": {
+    "selector": "모델 선택",
+    "noModels": "사용 가능한 모델이 없습니다",
+    "provider": "제공자"
+  },
+  "quote": {
+    "icon": "📎",
+    "label": "인용 출처:",
+    "remove": "인용 제거"
+  }
+}

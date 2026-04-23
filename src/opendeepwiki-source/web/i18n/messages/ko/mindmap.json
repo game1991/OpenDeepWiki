@@ -1,0 +1,25 @@
+{
+  "title": "프로젝트 구조",
+  "description": "{owner}/{repo}의 프로젝트 구조 마인드맵, 핵심 모듈과 파일 구조 표시",
+  "loading": "프로젝트 구조 마인드맵 생성 중",
+  "loadingDescription": "AI가 프로젝트 구조를 분석하고 있습니다, 잠시만 기다려주세요...",
+  "failed": "마인드맵 생성 실패",
+  "failedDescription": "저장소 문서를 다시 생성해 보세요",
+  "empty": "마인드맵 없음",
+  "emptyDescription": "이 저장소는 아직 프로젝트 구조 마인드맵을 생성하지 않았습니다",
+  "emptyContent": "마인드맵 내용이 비어 있습니다",
+  "error": "마인드맵을 로드할 수 없습니다",
+  "errorDescription": "나중에 다시 시도하거나 저장소가 존재하는지 확인하세요",
+  "toolbar": {
+    "mindmap": "마인드맵",
+    "list": "목록 보기",
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "reset": "초기화"
+  },
+  "tips": {
+    "expand": "노드를 클릭하여 펼치기/접기",
+    "link": "파일 경로를 클릭하여 소스 코드로 이동",
+    "scroll": "스크롤로 확대/축소"
+  }
+}

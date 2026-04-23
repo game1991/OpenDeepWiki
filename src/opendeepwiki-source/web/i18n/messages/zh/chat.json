@@ -1,0 +1,95 @@
+{
+  "assistant": {
+    "title": "OpenDeepWiki智能体",
+    "greeting": "👋 你好！我是OpenDeepWiki智能体",
+    "greetingSubtitle": "有什么关于文档的问题可以问我",
+    "disabled": "智能体功能已禁用",
+    "noModels": "暂无可用模型，请联系管理员配置",
+    "thinking": "正在思考...",
+    "selectModel": "请先选择模型",
+    "loadConfigFailed": "加载配置失败，请刷新重试"
+  },
+  "panel": {
+    "clearHistory": "清空对话",
+    "close": "关闭",
+    "inputPlaceholder": "输入消息，按 Enter 发送...",
+    "uploadImage": "上传图片",
+    "send": "发送",
+    "retry": "重试",
+    "closeError": "关闭",
+    "shareConversation": "分享当前对话",
+    "shareNoMessages": "暂无可分享的对话",
+    "shareSelectModel": "请先选择模型",
+    "shareFailed": "分享失败，请稍后重试",
+    "shareDialogTitle": "分享当前对话",
+    "shareDialogDescription": "生成一个只读链接，公开展示当前对话的即时快照。",
+    "shareLink": "分享链接",
+    "shareId": "分享ID",
+    "copied": "已复制",
+    "copyLink": "复制链接",
+    "openSharePage": "打开分享页",
+    "shareTitle": "分享标题",
+    "shareTitlePlaceholder": "给分享起个标题",
+    "shareDescription": "补充说明（可选）",
+    "shareDescriptionPlaceholder": "为查看者说明分享背景",
+    "shareExpiration": "有效期（分钟）",
+    "shareExpirationHint": "默认 7 天，最长 30 天。",
+    "generateShareLink": "生成分享链接",
+    "generating": "生成中..."
+  },
+  "message": {
+    "thinking": "思考过程",
+    "toolCall": "工具调用",
+    "toolResult": "工具执行结果",
+    "toolError": "工具执行失败",
+    "uploadedImage": "上传图片",
+    "quotedFrom": "引用自：",
+    "currentPage": "当前页面",
+    "tokens": "tokens",
+    "inputTokens": "输入",
+    "outputTokens": "输出"
+  },
+  "image": {
+    "upload": "上传图片",
+    "supportedFormats": "支持 PNG、JPG、GIF、WebP，单张最大 10MB，最多 {maxImages} 张",
+    "unsupportedFormat": "仅支持 PNG、JPG、GIF、WebP 格式的图片",
+    "sizeTooLarge": "图片大小不能超过 10MB",
+    "preview": "预览 {index}",
+    "remove": "移除图片 {index}",
+    "invalidFormat": "无效的Base64图片格式",
+    "readFailed": "读取文件失败"
+  },
+  "error": {
+    "chatFailed": "对话失败，请重试",
+    "configMissing": "配置缺失",
+    "modelUnavailable": "模型不可用",
+    "requestTimeout": "请求超时，请重试",
+    "connectionFailed": "连接失败，请检查网络",
+    "sendFailed": "发送失败，请重试",
+    "loadConfigFailed": "加载配置失败",
+    "noResponse": "无法读取响应"
+  },
+  "embed": {
+    "title": "对话助手",
+    "greeting": "👋 你好！",
+    "greetingSubtitle": "有什么可以帮助你的吗？",
+    "inputPlaceholder": "输入消息...",
+    "configInvalid": "配置验证失败",
+    "loadConfigFailed": "加载配置失败"
+  },
+  "model": {
+    "selector": "选择模型",
+    "noModels": "暂无可用模型",
+    "provider": "提供商"
+  },
+  "quote": {
+    "icon": "📎",
+    "label": "引用自：",
+    "remove": "移除引用"
+  },
+  "share": {
+    "title": "对话分享",
+    "messageCount": "{count} 条对话消息",
+    "empty": "该分享暂无消息"
+  }
+}

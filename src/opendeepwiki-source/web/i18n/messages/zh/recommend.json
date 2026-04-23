@@ -1,0 +1,32 @@
+{
+  "title": "推荐",
+  "subtitle": "发现热门和推荐的仓库",
+  "subtitleWithCount": "从 {count} 个仓库中为您精选推荐",
+  "refresh": "换一批",
+  "allLanguages": "所有语言",
+  "strategies": {
+    "default": "综合推荐",
+    "popular": "热门项目",
+    "personalized": "个性化",
+    "explore": "探索发现"
+  },
+  "reasons": {
+    "popular": "热门项目",
+    "highSubscription": "高订阅量",
+    "recentlyActive": "近期活跃",
+    "matchPreference": "符合您的偏好",
+    "matchTechStack": "与您的技术栈匹配",
+    "similarUsers": "相似用户推荐",
+    "comprehensive": "综合推荐"
+  },
+  "actions": {
+    "notInterested": "不感兴趣"
+  },
+  "empty": {
+    "title": "暂无推荐内容",
+    "description": "添加更多仓库后将获得个性化推荐"
+  },
+  "score": {
+    "label": "推荐指数"
+  }
+}

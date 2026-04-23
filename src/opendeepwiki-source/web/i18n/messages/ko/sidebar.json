@@ -1,0 +1,13 @@
+{
+  "explore": "탐색",
+  "recommend": "추천",
+  "private": "비공개 저장소",
+  "subscribe": "구독",
+  "bookmarks": "북마크",
+  "organizations": "조직",
+  "apps": "내 앱",
+  "mcp": "MCP 서비스",
+  "github": "GitHub",
+  "feishu": "Feishu",
+  "scanQrCode": "QR 코드를 스캔하여 팔로우"
+}

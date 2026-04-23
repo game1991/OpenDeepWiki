@@ -1,0 +1,22 @@
+{
+  "title": "Profile",
+  "description": "Manage your personal information",
+  "name": "Username",
+  "email": "Email",
+  "phone": "Phone",
+  "phonePlaceholder": "Optional",
+  "avatarUrl": "Avatar URL",
+  "updateSuccess": "Profile updated successfully",
+  "updateFailed": "Update failed",
+  "nameRequired": "Username is required",
+  "changePassword": "Change Password",
+  "passwordDescription": "Change your password regularly to keep your account secure",
+  "currentPassword": "Current Password",
+  "newPassword": "New Password",
+  "confirmPassword": "Confirm New Password",
+  "passwordPlaceholder": "At least 6 characters",
+  "passwordChanged": "Password changed successfully",
+  "passwordChangeFailed": "Failed to change password",
+  "passwordMismatch": "Passwords do not match",
+  "passwordTooShort": "Password must be at least 6 characters"
+}

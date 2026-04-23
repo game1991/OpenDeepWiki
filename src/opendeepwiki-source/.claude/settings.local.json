@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Read(//d/code/**)",
+      "Bash(cat:*)",
+      "Bash(done)",
+      "Bash(findstr:*)",
+      "Bash(dir /s /b:*)",
+      "Bash(where /r \"C:\\\\Users\\\\Administrator\\\\RiderProjects\\\\MarkAgents\\\\OpenDeepWiki\\\\web-site\\\\src\" *Dialog*.tsx:*)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(tree /F \"web-site\\\\src\\\\i18n\":*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(node check-i18n.js:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(git push:*)",
+      "Bash(bash:*)",
+      "mcp__MCP_DOCKER__code-mode",
+      "Bash(List files in repo root)",
+      "Bash(rg:*)",
+      "Bash(cd:*)",
+      "Bash(dotnet build:*)",
+      "Bash(npx next:*)",
+      "Bash(docker compose:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

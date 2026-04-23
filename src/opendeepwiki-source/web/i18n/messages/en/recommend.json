@@ -1,0 +1,32 @@
+{
+  "title": "Recommendations",
+  "subtitle": "Discover trending and recommended repositories",
+  "subtitleWithCount": "Curated from {count} repositories for you",
+  "refresh": "Refresh",
+  "allLanguages": "All Languages",
+  "strategies": {
+    "default": "For You",
+    "popular": "Trending",
+    "personalized": "Personalized",
+    "explore": "Explore"
+  },
+  "reasons": {
+    "popular": "Popular project",
+    "highSubscription": "High subscriptions",
+    "recentlyActive": "Recently active",
+    "matchPreference": "Matches your preference",
+    "matchTechStack": "Matches your tech stack",
+    "similarUsers": "Similar users recommend",
+    "comprehensive": "Recommended"
+  },
+  "actions": {
+    "notInterested": "Not interested"
+  },
+  "empty": {
+    "title": "No recommendations yet",
+    "description": "Add more repositories to get personalized recommendations"
+  },
+  "score": {
+    "label": "Recommendation Score"
+  }
+}

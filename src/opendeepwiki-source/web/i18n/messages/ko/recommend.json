@@ -1,0 +1,32 @@
+{
+  "title": "추천",
+  "subtitle": "트렌드 및 추천 저장소 발견",
+  "subtitleWithCount": "{count}개 저장소에서 엄선한 추천",
+  "refresh": "새로고침",
+  "allLanguages": "모든 언어",
+  "strategies": {
+    "default": "당신을 위해",
+    "popular": "트렌드",
+    "personalized": "개인화",
+    "explore": "탐색"
+  },
+  "reasons": {
+    "popular": "인기 프로젝트",
+    "highSubscription": "높은 구독 수",
+    "recentlyActive": "최근 활동",
+    "matchPreference": "당신의 선호도와 일치",
+    "matchTechStack": "당신의 기술 스택과 일치",
+    "similarUsers": "유사 사용자 추천",
+    "comprehensive": "추천"
+  },
+  "actions": {
+    "notInterested": "관심 없음"
+  },
+  "empty": {
+    "title": "아직 추천이 없습니다",
+    "description": "더 많은 저장소를 추가하여 개인화된 추천을 받으세요"
+  },
+  "score": {
+    "label": "추천 점수"
+  }
+}
