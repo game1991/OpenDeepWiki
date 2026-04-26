@@ -1111,6 +1111,7 @@ public class ChatAssistantService : IChatAssistantService
     /// <summary>
     /// Gets the repository working directory path based on owner and repo name.
     /// The repository is cloned to {RepositoriesDirectory}/{org}/{repo}/tree/
+    /// Path components are sanitized to match RepositoryAnalyzer logic.
     /// </summary>
     private string GetRepositoryPath(string owner, string repo)
     {
