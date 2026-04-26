@@ -70,6 +70,7 @@ export default function AdminSettingsPage() {
 
   // Quick Setup state
   const [selectedProvider, setSelectedProvider] = useState<string>("");
+  const [customEndpoint, setCustomEndpoint] = useState<string>("");
   const [quickSetupApiKey, setQuickSetupApiKey] = useState("");
   const [providerModels, setProviderModels] = useState<ProviderModel[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -182,6 +183,7 @@ export default function AdminSettingsPage() {
 
       if (detectedProvider) {
         setSelectedProvider(detectedProvider[0]);
+        setCustomEndpoint(savedEndpoint); // 恢复已保存的 endpoint
         setQuickSetupApiKey(savedApiKey);
         setSelectedModels({
           catalog: savedCatalogModel,
@@ -196,6 +198,9 @@ export default function AdminSettingsPage() {
             Array.from(currentModels).map((id) => ({ id, displayName: id }))
           );
         }
+      } else if (savedEndpoint) {
+        // 如果 endpoint 不匹配任何预设，但仍选择了某个供应商，恢复 endpoint
+        setCustomEndpoint(savedEndpoint);
       }
     } catch (error) {
       console.error("Failed to fetch settings:", error);
@@ -250,7 +255,7 @@ export default function AdminSettingsPage() {
   // Quick Setup: Load models from provider
   const handleLoadModels = async () => {
     const preset = PROVIDER_PRESETS[selectedProvider];
-    if (!preset || !quickSetupApiKey) return;
+    if (!preset || !quickSetupApiKey || !customEndpoint) return;
 
     setLoadingModels(true);
 
@@ -258,7 +263,7 @@ export default function AdminSettingsPage() {
     const prevSelections = { ...selectedModels };
 
     try {
-      const models = await listProviderModels(preset.endpoint, quickSetupApiKey, preset.requestType);
+      const models = await listProviderModels(customEndpoint, quickSetupApiKey, preset.requestType);
       setProviderModels(models);
 
       // Keep previous selections if they exist in the new list
@@ -283,19 +288,19 @@ export default function AdminSettingsPage() {
 
   const handleApplyQuickSetup = async () => {
     const preset = PROVIDER_PRESETS[selectedProvider];
-    if (!preset) return;
+    if (!preset || !customEndpoint) return;
 
     const settingsMap: Record<string, string> = {
       WIKI_CATALOG_MODEL: selectedModels.catalog,
-      WIKI_CATALOG_ENDPOINT: preset.endpoint,
+      WIKI_CATALOG_ENDPOINT: customEndpoint,
       WIKI_CATALOG_API_KEY: quickSetupApiKey,
       WIKI_CATALOG_REQUEST_TYPE: preset.requestType,
       WIKI_CONTENT_MODEL: selectedModels.content,
-      WIKI_CONTENT_ENDPOINT: preset.endpoint,
+      WIKI_CONTENT_ENDPOINT: customEndpoint,
       WIKI_CONTENT_API_KEY: quickSetupApiKey,
       WIKI_CONTENT_REQUEST_TYPE: preset.requestType,
       WIKI_TRANSLATION_MODEL: selectedModels.translation,
-      WIKI_TRANSLATION_ENDPOINT: preset.endpoint,
+      WIKI_TRANSLATION_ENDPOINT: customEndpoint,
       WIKI_TRANSLATION_API_KEY: quickSetupApiKey,
       WIKI_TRANSLATION_REQUEST_TYPE: preset.requestType,
     };
@@ -322,7 +327,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const canLoadModels = selectedProvider && quickSetupApiKey;
+  const canLoadModels = selectedProvider && quickSetupApiKey && customEndpoint;
   const canApply = selectedModels.catalog && selectedModels.content && selectedModels.translation;
 
   const categories = useMemo(() => [...new Set(settings.map((s) => s.category))], [settings]);
@@ -514,6 +519,11 @@ export default function AdminSettingsPage() {
                               value={selectedProvider || undefined}
                               onValueChange={(value) => {
                                 setSelectedProvider(value);
+                                // 自动填充预设的 endpoint
+                                const preset = PROVIDER_PRESETS[value];
+                                if (preset) {
+                                  setCustomEndpoint(preset.endpoint);
+                                }
                                 setProviderModels([]);
                                 setSelectedModels({ catalog: "", content: "", translation: "" });
                               }}
@@ -531,8 +541,21 @@ export default function AdminSettingsPage() {
                             </Select>
                           </div>
 
-                          {/* API Key */}
+                          {/* Endpoint */}
                           <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                              Endpoint
+                            </label>
+                            <Input
+                              value={customEndpoint}
+                              onChange={(e) => setCustomEndpoint(e.target.value)}
+                              placeholder="https://api.openai.com/v1"
+                              disabled={!selectedProvider}
+                            />
+                          </div>
+
+                          {/* API Key */}
+                          <div className="space-y-2 md:col-span-2">
                             <label className="text-sm font-medium">
                               {t('admin.settings.quickSetup.apiKey')}
                             </label>
