@@ -563,19 +563,19 @@
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="info-label">WSL2 IP</div>
-                        <div class="info-value">172.17.247.87</div>
+                        <div class="info-value" id="wsl-ip">获取中...</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">Kind 版本</div>
-                        <div class="info-value">v0.20.0</div>
+                        <div class="info-label">K3s 版本</div>
+                        <div class="info-value">v1.34.6</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">K8s 版本</div>
-                        <div class="info-value">v1.27.3</div>
+                        <div class="info-value">v1.34.6</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">节点状态</div>
-                        <div class="info-value" style="color: var(--accent-green);">Ready</div>
+                        <div class="info-value" id="node-status" style="color: var(--accent-green);">获取中...</div>
                     </div>
                 </div>
 
@@ -605,13 +605,21 @@
                         <strong style="color: var(--text-primary);">域名解析配置：</strong>
                     </p>
                     <div class="code-block">
-                        <code># Windows hosts 文件
+                        <code id="hosts-config"># Windows hosts 文件
 C:\Windows\System32\drivers\etc\hosts
 
-172.17.247.87 local.gateway.com
-172.17.247.87 local.dashboard.com
-172.17.247.87 local.wiki.com</code>
+<WSL-IP> local.gateway.com
+<WSL-IP> local.dashboard.com
+<WSL-IP> local.wiki.com</code>
                         <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(0, 240, 255, 0.05); border-radius: 8px; border-left: 3px solid var(--text-primary);">
+                        <strong style="color: var(--text-primary);">💡 获取 WSL IP：</strong>
+                        <div class="code-block" style="margin-top: 8px; margin-bottom: 0;">
+                            <code>ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1</code>
+                            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                        </div>
                     </div>
 
                     <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-green);">
@@ -654,7 +662,7 @@ C:\Windows\System32\drivers\etc\hosts
     <footer>
         <div class="container">
             <div class="footer-text">
-                <p>K8s 本地开发环境 | Kind + Ingress + Dashboard + OpenDeepWiki</p>
+                <p>K8s 本地开发环境 | K3s + Traefik + Dashboard + OpenDeepWiki</p>
                 <p style="margin-top: 10px; opacity: 0.7;">
                     部署时间: <span id="deploy-time"></span> |
                     系统运行正常
@@ -753,6 +761,17 @@ C:\Windows\System32\drivers\etc\hosts
 
         // 显示部署时间
         document.getElementById('deploy-time').textContent = new Date().toLocaleString('zh-CN');
+
+        // 系统状态：前端获取
+        const hostIP = location.hostname;
+        document.getElementById('wsl-ip').textContent = hostIP;
+        document.getElementById('node-status').textContent = 'Ready';
+
+        // 替换 hosts 配置中的占位符
+        const hostsConfig = document.getElementById('hosts-config');
+        if (hostsConfig) {
+            hostsConfig.textContent = hostsConfig.textContent.replace(/<WSL-IP>/g, hostIP);
+        }
     </script>
 </body>
 </html>

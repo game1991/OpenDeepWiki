@@ -1,0 +1,18 @@
+K8s Gateway 已部署！
+
+访问地址：
+  Gateway:   http://{{ .Values.gateway.host }}:{{ .Values.dashboard.httpPort }}
+  Dashboard: https://{{ .Values.dashboard.host }}:{{ .Values.dashboard.httpsPort }}
+  Wiki:      http://local.wiki.com:{{ .Values.dashboard.httpPort }}
+
+{{- if .Values.dashboard.enabled }}
+获取 Dashboard Token：
+  kubectl get secret {{ .Values.dashboard.serviceAccount.name }}-token -n {{ .Values.dashboard.namespace }} -o jsonpath='{.data.token}' | base64 -d
+
+修补 Dashboard 使用管理员账号：
+  kubectl patch deployment kubernetes-dashboard -n {{ .Values.dashboard.namespace }} \
+    -p '{"spec":{"template":{"spec":{"serviceAccountName":"{{ .Values.dashboard.serviceAccount.name }}"}}}}'
+{{- end }}
+
+Windows hosts 配置：
+  <WSL-IP> {{ .Values.gateway.host }} {{ .Values.dashboard.host }} local.wiki.com

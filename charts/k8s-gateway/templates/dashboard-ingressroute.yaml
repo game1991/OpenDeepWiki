@@ -1,0 +1,74 @@
+{{- if .Values.dashboard.enabled }}
+# Dashboard 路由配置（HTTPS）
+# 域名：{{ .Values.dashboard.host }}
+# 端口：{{ .Values.dashboard.httpsPort }}（Traefik hostPort 映射）
+#
+# 为什么用 IngressRoute CRD 而不是标准 Ingress？
+# Dashboard 后端使用自签名证书，标准 Ingress 无法指定跳过证书验证，
+# 必须通过 Traefik 的 IngressRoute CRD 关联 ServersTransport。
+
+# ServersTransport: 跳过 Dashboard 自签名证书验证
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: dashboard-transport
+  namespace: {{ .Values.dashboard.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  insecureSkipVerify: true
+---
+# IngressRoute: HTTPS 路由
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dashboard-route
+  namespace: {{ .Values.dashboard.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.dashboard.host }}`)
+      kind: Rule
+      services:
+        - name: kubernetes-dashboard
+          port: 443
+          serversTransport: dashboard-transport
+  tls: {}
+---
+# Middleware: HTTP→HTTPS 重定向（保留 {{ .Values.dashboard.httpsPort }} 端口）
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dashboard-https-redirect
+  namespace: {{ .Values.dashboard.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  redirectRegex:
+    regex: ^http://{{ .Values.dashboard.host | replace "." "\\." }}(:{{ .Values.dashboard.httpPort }})?/(.*)
+    replacement: https://{{ .Values.dashboard.host }}:{{ .Values.dashboard.httpsPort }}/${2}
+    permanent: true
+---
+# IngressRoute: HTTP 重定向到 HTTPS
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dashboard-redirect
+  namespace: {{ .Values.dashboard.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.dashboard.host }}`)
+      kind: Rule
+      services:
+        - name: kubernetes-dashboard
+          port: 443
+      middlewares:
+        - name: dashboard-https-redirect
+{{- end }}
