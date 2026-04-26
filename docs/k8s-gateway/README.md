@@ -1,229 +1,233 @@
-# K8s 统一网关配置
+# K3s 本地开发环境部署指南
 
-> Kind v0.20.0 + K8s v1.27.3 + Ingress v1.15.1 + Dashboard v2.7.0
->
-> WSL2 CentOS 7.9 + NAT 网络模式
+## 环境信息
 
----
+| 组件 | 版本 |
+|------|------|
+| WSL2 | CentOS 7.9（systemd 不可用，通过 init.wsl 自启） |
+| 网络 | NAT 模式（`hostAddressLoopback=true`） |
+| K3s | v1.34.6+k3s1 |
+| Traefik | v3.6.10（k3s 默认，hostPort 模式） |
+| Dashboard | v2.7.0 |
 
-## 架构概览
+## 统一访问入口
 
+| 服务 | 域名 | 端口 | 协议 | 路由方式 |
+|------|------|------|------|----------|
+| 统一网关 | local.gateway.com | 8880 | HTTP | 标准 Ingress |
+| OpenDeepWiki | local.wiki.com | 8880 | HTTP | 标准 Ingress + Middleware |
+| Dashboard | local.dashboard.com | 8443 | HTTPS | IngressRoute CRD + ServersTransport |
+
+**端口映射**：
+
+| WSL 端口 | 来源 | 说明 |
+|----------|------|------|
+| 8880 | Traefik hostPort | HTTP 入口（web entrypoint → 容器 8000 → hostPort 8880） |
+| 8443 | Traefik hostPort | HTTPS 入口（websecure entrypoint → 容器 8443 → hostPort 8443） |
+
+**Windows hosts 配置**：
 ```
-┌──────────────────────────────────────────────────┐
-│  Windows 浏览器                                   │
-│  ├─ http://local.gateway.com:8880/   → 统一网关  │
-│  └─ https://local.dashboard.com:8443/ → Dashboard│
-└──────────────────────────────────────────────────┘
-                       │
-                       │ NAT + hosts 域名解析
-                       ▼
-┌──────────────────────────────────────────────────┐
-│  WSL2 CentOS 7.9                                 │
-│                                                   │
-│  Ingress Controller (nginx)                       │
-│  ├─ :8880 (HTTP)  → local.gateway.com            │
-│  └─ :8443 (HTTPS) → local.dashboard.com          │
-│                                                   │
-│  ┌──────────┐    ┌──────────────────┐            │
-│  │ gateway  │    │   Dashboard      │            │
-│  │ (HTTP)   │    │   (HTTPS backend)│            │
-│  └──────────┘    └──────────────────┘            │
-│                                                   │
-│  Kind Cluster (k8s-nat)                          │
-└──────────────────────────────────────────────────┘
+172.17.247.87 local.gateway.com local.dashboard.com local.wiki.com
 ```
 
 ---
 
-## YAML 文件清单
+## Traefik 网关架构
 
-| 序号 | 文件 | 说明 |
-|------|------|------|
-| 00 | `00-kind-cluster.yaml` | Kind 集群配置（NAT 模式端口映射） |
-| 01 | `01-gateway-pod.yaml` | 网关 Pod（挂载 ConfigMap） |
-| 02 | `02-gateway-service.yaml` | 网关 Service |
-| 03 | `03-gateway-ingress.yaml` | 网关 Ingress 路由（HTTP） |
-| 04 | `04-dashboard-ingress.yaml` | Dashboard Ingress 路由（HTTPS） |
-| 05 | `05-gateway-html-configmap.yaml` | 网关页面 HTML（赛博科技风格） |
-| 06 | `06-dashboard-admin.yaml` | Dashboard 管理员账号 |
+### 端口流转
+
+```
+Windows 浏览器
+  │
+  ├─ http://local.wiki.com:8880 ──→ WSL:8880 ──→ Traefik(hostPort) ──→ Ingress ──→ Wiki Frontend(:3000) / Backend(:8080/api)
+  ├─ http://local.gateway.com:8880 ──→ WSL:8880 ──→ Traefik(hostPort) ──→ Ingress ──→ Gateway Nginx(:80)
+  └─ https://local.dashboard.com:8443 ──→ WSL:8443 ──→ Traefik(hostPort) ──→ IngressRoute ──→ Dashboard(:443)
+```
+
+### 路由配置总览
+
+| 资源 | 类型 | 命名空间 | 用途 |
+|------|------|----------|------|
+| gateway-ingress | Ingress | kube-system | Gateway 首页 |
+| opendeepwiki | Ingress | opendeepwiki | Wiki 前端 + API |
+| dashboard-route | IngressRoute | kubernetes-dashboard | K8s Dashboard（HTTPS 后端） |
+| wiki-limits | Middleware | opendeepwiki | Wiki 大文件上传限制 |
+| dashboard-transport | ServersTransport | kubernetes-dashboard | 跳过 Dashboard 自签名证书 |
+
+### 为什么 Dashboard 用 IngressRoute 而不是标准 Ingress？
+
+Dashboard 后端使用自签名证书，Traefik 连接后端时需要跳过证书验证。**标准 K8s Ingress 无法关联 ServersTransport**，必须使用 Traefik 的 IngressRoute CRD。
+
+| 场景 | 推荐方式 | 原因 |
+|------|---------|------|
+| 简单 HTTP 路由 | 标准 Ingress | 兼容性好 |
+| HTTPS 后端（自签名证书） | IngressRoute CRD | 标准 Ingress 无法关联 ServersTransport |
+| 需要自定义 Middleware | IngressRoute CRD | 标准 Ingress 只能通过 annotation 引用 |
+
+### Nginx Ingress → Traefik 配置映射
+
+| Nginx Annotation | Traefik 等效 |
+|------------------|-------------|
+| `backend-protocol: HTTPS` | IngressRoute + `serversTransport` |
+| `proxy-ssl-verify: off` | ServersTransport `insecureSkipVerify: true` |
+| `ssl-redirect: true` | `router.entrypoints: websecure` |
+| `proxy-body-size: 100m` | Middleware `buffering.maxRequestBodyBytes` |
+| `proxy-read-timeout: 300` | 无直接等效，需 Middleware 或全局配置 |
 
 ---
 
-## 快速部署
-
-### 前置条件
+## 一键部署
 
 ```bash
-# 1. 修复 DNS（部署前必做）
-sudo tee /etc/resolv.conf > /dev/null << 'EOF'
-nameserver 8.8.8.8
-nameserver 114.114.114.114
-EOF
-
-# 2. 确认 Docker 已运行
-docker info
-
-# 3. 预下载镜像
-docker pull kindest/node:v1.27.3
-docker pull kubernetesui/dashboard:v2.7.0
-docker pull kubernetesui/metrics-scraper:v1.0.8
-docker pull registry.k8s.io/ingress-nginx/controller:v1.15.1
-docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+bash scripts/deploy-k3s-local.sh
 ```
 
-### 部署步骤
+该脚本会自动完成以下步骤：
+1. 安装 K3s（`--disable=servicelb`，使用 hostPort 暴露端口）
+2. 安装 Kubernetes Dashboard
+3. 部署 K8s Gateway（Helm：ConfigMap + Deployment + Service + Ingress + IngressRoute + Middleware）
+4. 部署 OpenDeepWiki（Helm install）
+
+---
+
+## 分步部署
+
+### 1. 安装 K3s
 
 ```bash
-# 1. 创建集群
-kind create cluster --config=yamls/00-kind-cluster.yaml --wait=5m
+curl -sfL https://rancher.io/install-k3s | sh -s - --cluster-init --disable=servicelb
+```
 
-# 2. 加载镜像到集群
-kind load docker-image kubernetesui/dashboard:v2.7.0 --name k8s-nat
-kind load docker-image kubernetesui/metrics-scraper:v1.0.8 --name k8s-nat
-kind load docker-image registry.k8s.io/ingress-nginx/controller:v1.15.1 --name k8s-nat
-kind load docker-image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9 --name k8s-nat
+> `--disable=servicelb` 禁用 k3s 自带的 svclb（我们用 hostPort 暴露端口）
 
-# 3. 部署 Dashboard
+### 2. 安装 Kubernetes Dashboard
+
+```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-kubectl apply -f yamls/06-dashboard-admin.yaml
-kubectl patch deployment kubernetes-dashboard -n kubernetes-dashboard \
-  -p '{"spec":{"template":{"spec":{"serviceAccountName":"admin-user"}}}}'
-
-# 4. 部署 Ingress Controller（关键：修改 YAML）
-curl -s https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml | \
-  sed -e 's|@sha256:[a-f0-9]*||g' -e 's/imagePullPolicy: IfNotPresent/imagePullPolicy: Never/g' | \
-  kubectl apply -f -
-kubectl wait --namespace ingress-nginx --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller --timeout=120s
-
-# 5. 部署统一网关
-kubectl apply -f yamls/05-gateway-html-configmap.yaml
-kubectl apply -f yamls/01-gateway-pod.yaml
-kubectl apply -f yamls/02-gateway-service.yaml
-kubectl apply -f yamls/03-gateway-ingress.yaml
-kubectl apply -f yamls/04-dashboard-ingress.yaml
-
-# 6. 等待就绪
-kubectl wait --for=condition=ready pod gateway --timeout=30s
 ```
 
-### Windows hosts 配置
-
-以管理员身份编辑 `C:\Windows\System32\drivers\etc\hosts`：
-
-```
-# K8s 本地域名（替换为你的 WSL2 IP）
-172.17.247.87 local.gateway.com
-172.17.247.87 local.dashboard.com
-```
-
-### 访问地址
-
-| 服务 | 地址 | 协议 |
-|------|------|------|
-| **统一网关** | http://local.gateway.com:8880/ | HTTP |
-| **Dashboard** | https://local.dashboard.com:8443/ | HTTPS |
-
----
-
-## 问题排查手册
-
-### P1: 网关页面无法访问（503）
-
-**原因**：Service selector 与 Pod labels 不匹配
+### 3. 部署 K8s Gateway（Helm）
 
 ```bash
-# 检查
-kubectl get endpoints gateway
-# 预期显示 Pod IP，如 <none> 则 selector 不匹配
+helm install k8s-gateway charts/k8s-gateway
 
-# 修复：删除并重建 Service
-kubectl delete svc gateway
-kubectl apply -f yamls/02-gateway-service.yaml
-
-# 等待 Ingress Controller 同步（约 10 秒）
-sleep 10
-```
-
-**坑点**：`kubectl expose pod` 会自动添加 `run: gateway` 标签到 selector，但 Pod 没有 `run` 标签，导致不匹配。必须手动创建 Service YAML。
-
-### P2: Ingress 返回 404/503
-
-**原因**：Ingress 的 namespace 与 Service 不在同一 namespace
-
-```bash
-# Dashboard 的 Ingress 必须在 kubernetes-dashboard namespace
-# 网关的 Ingress 必须在 default namespace
-kubectl get ingress -A
-```
-
-### P3: nc 发送的 HTTP 响应格式不正确
-
-**原因**：`nc` 的 `-e` 或 `echo -e` 方式可能丢失 `\r\n`
-
-**解决**：使用 `printf` 确保 HTTP 头部格式正确
-```bash
-printf "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: %s\r\nConnection: close\r\n\r\n" "$(wc -c < /var/www/html/index.html)"
-cat /var/www/html/index.html
-```
-
-### P4: ConfigMap 更新后页面未刷新
-
-**原因**：Pod 不会自动检测 ConfigMap 变更
-
-```bash
-# 重启 Pod 使 ConfigMap 生效
-kubectl delete pod gateway
-kubectl apply -f yamls/01-gateway-pod.yaml
-```
-
-### P5: Dashboard 通过 Ingress 访问返回 Forbidden
-
-**原因**：Dashboard 默认 ServiceAccount 权限不足
-
-**解决**：
-```bash
-# 修改 Dashboard 使用 admin-user
+# 修补 Dashboard 使用管理员账号
 kubectl patch deployment kubernetes-dashboard -n kubernetes-dashboard \
   -p '{"spec":{"template":{"spec":{"serviceAccountName":"admin-user"}}}}'
 ```
 
-### P6: 新增服务的域名路由
+自定义配置：
+```bash
+helm install k8s-gateway charts/k8s-gateway \
+  --set gateway.host=my-gateway.local \
+  --set dashboard.host=my-dashboard.local \
+  --set wiki.maxRequestBodyBytes=209715200
+```
+
+单独关闭模块：
+```bash
+# 不部署 Gateway 首页
+helm install k8s-gateway charts/k8s-gateway --set gateway.enabled=false
+
+# 不部署 Dashboard 路由
+helm install k8s-gateway charts/k8s-gateway --set dashboard.enabled=false
+
+# 不部署 Wiki Middleware
+helm install k8s-gateway charts/k8s-gateway --set wiki.enabled=false
+```
+
+### 4. 部署 OpenDeepWiki
 
 ```bash
-# 1. 创建 Service 和 Deployment
-# 2. 创建 Ingress（指定正确的 namespace）
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: new-service-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: local.newservice.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: new-service
-            port:
-              number: 80
-EOF
+kubectl create namespace opendeepwiki
+bash scripts/create-opendeepwiki-secret.sh
+helm install opendeepwiki charts/opendeepwiki -n opendeepwiki -f config/values-k3s.yaml
+```
 
-# 3. Windows hosts 添加
-# 172.17.247.87 local.newservice.com
+### 5. 获取 Dashboard Token
+
+```bash
+# 长期 Token（不会过期）
+kubectl get secret admin-user-token -n kubernetes-dashboard \
+  -o jsonpath='{.data.token}' | base64 -d
 ```
 
 ---
 
-## 清理
+## WSL2 自启动配置
+
+### CentOS 7 不支持 systemd
+
+CentOS 7 的 systemd 版本为 219，远低于 WSL2 原生 systemd 支持所需的 245+。启用 `systemd=true` 会导致 `Failed to get D-Bus connection` 等错误。
+
+### 实际自启动机制
+
+```
+用户打开终端
+  → /etc/profile source /etc/profile.d/docker.sh
+  → 执行 /etc/init.wsl
+  → 启动 Docker + K3s
+```
+
+关键文件：
+
+| 文件 | 作用 |
+|------|------|
+| `/etc/profile.d/docker.sh` | 内容为 `/etc/init.wsl`，被 login shell 自动 source |
+| `/etc/init.wsl` | 启动 Docker 和 K3s 的脚本，含 pgrep 防重复 |
+| `/etc/wsl.conf` | `command=/etc/init.wsl`，WSL 启动时也触发（双保险） |
+
+### 重启后检查
 
 ```bash
-# 删除集群（清理所有资源）
-kind delete cluster --name k8s-nat
+kubectl get nodes
+kubectl get pods -A
+```
+
+常见问题：
+- PV 节点亲和性失效（节点名变化）
+- SQLite 索引损坏（需 `REINDEX`）
+- Traefik hostPort 冲突（旧 Pod 残留，需 `kubectl delete pod --force`）
+
+---
+
+## 数据库操作
+
+```bash
+# 找到数据库
+sudo find /var/lib/rancher/k3s/storage -name "opendeepwiki.db"
+
+# 操作前先缩容后端
+kubectl scale deployment opendeepwiki-backend -n opendeepwiki --replicas=0
+
+# 修复索引
+sudo sqlite3 /var/lib/rancher/k3s/storage/pvc-xxx/.../opendeepwiki.db \
+  "PRAGMA integrity_check; REINDEX;"
+
+# 恢复后端
+kubectl scale deployment opendeepwiki-backend -n opendeepwiki --replicas=1
+```
+
+---
+
+## 快速参考
+
+```bash
+# Gateway 部署/更新
+helm upgrade k8s-gateway charts/k8s-gateway
+
+# Wiki 部署/更新
+helm upgrade opendeepwiki charts/opendeepwiki -n opendeepwiki -f config/values-k3s.yaml
+
+# 健康检查
+curl -s -H "Host: local.wiki.com" http://localhost:8880/api/system/version
+
+# 查看路由
+kubectl get ingress,ingressroute,middleware,serverstransport --all-namespaces
+
+# 清理
+helm uninstall k8s-gateway
+helm uninstall opendeepwiki -n opendeepwiki
+kubectl delete namespace opendeepwiki
+/usr/local/bin/k3s-uninstall.sh
 ```

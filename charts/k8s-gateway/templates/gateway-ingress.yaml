@@ -1,0 +1,25 @@
+{{- if .Values.gateway.enabled }}
+# Gateway Ingress 路由（HTTP）
+# 域名：{{ .Values.gateway.host }}
+# 端口：{{ .Values.dashboard.httpPort }}（Traefik hostPort 映射）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: {{ .Values.gateway.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: {{ .Values.gateway.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 80
+{{- end }}

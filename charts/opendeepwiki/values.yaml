@@ -165,11 +165,9 @@ postgresql:
 # ==========================================
 ingress:
   enabled: true
-  className: nginx
+  className: traefik
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
   hosts:
     - host: opendeepwiki.local
       paths:

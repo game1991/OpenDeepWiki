@@ -1,0 +1,21 @@
+gateway:
+  enabled: true
+  image: nginx:alpine
+  replicas: 1
+  host: local.gateway.com
+  namespace: kube-system
+
+dashboard:
+  enabled: true
+  host: local.dashboard.com
+  httpPort: 8880
+  httpsPort: 8443
+  namespace: kubernetes-dashboard
+  serviceAccount:
+    name: admin-user
+  longLivedToken: true
+
+wiki:
+  enabled: true
+  namespace: opendeepwiki
+  maxRequestBodyBytes: 104857600

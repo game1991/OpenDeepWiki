@@ -1,0 +1,16 @@
+{{- if .Values.gateway.enabled }}
+# Gateway Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: {{ .Values.gateway.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: gateway
+  ports:
+  - port: 80
+    targetPort: 80
+{{- end }}

@@ -1,0 +1,14 @@
+{{- if .Values.wiki.enabled }}
+# OpenDeepWiki 大文件上传 Middleware
+# 必须在 helm install opendeepwiki 之前创建，否则 Ingress 引用的 Middleware 不存在会路由失败
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: wiki-limits
+  namespace: {{ .Values.wiki.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+spec:
+  buffering:
+    maxRequestBodyBytes: {{ .Values.wiki.maxRequestBodyBytes | int64 }}
+{{- end }}

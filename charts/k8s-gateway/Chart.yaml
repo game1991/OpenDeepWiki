@@ -1,0 +1,11 @@
+apiVersion: v2
+name: k8s-gateway
+description: K8s 本地服务网关 - Gateway 首页、Dashboard 路由、Wiki Middleware
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - gateway
+  - traefik
+  - dashboard
+  - k3s
