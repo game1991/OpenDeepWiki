@@ -1114,7 +1114,29 @@ public class ChatAssistantService : IChatAssistantService
     /// </summary>
     private string GetRepositoryPath(string owner, string repo)
     {
-        return Path.Combine(_repoOptions.RepositoriesDirectory, owner, repo, "tree");
+        // Sanitize path components to match RepositoryAnalyzer logic
+        var safeOwner = SanitizePathComponent(owner);
+        var safeRepo = SanitizePathComponent(repo);
+        return Path.Combine(_repoOptions.RepositoriesDirectory, safeOwner, safeRepo, "tree");
+    }
+
+    /// <summary>
+    /// Sanitizes a path component by replacing path separators and dangerous characters.
+    /// Matches the logic in RepositoryAnalyzer.
+    /// </summary>
+    private static string SanitizePathComponent(string component)
+    {
+        if (string.IsNullOrWhiteSpace(component))
+        {
+            return string.Empty;
+        }
+
+        // Remove any path separators and dangerous characters
+        return component
+            .Replace('/', '_')
+            .Replace('\\', '_')
+            .Replace("..", "_")
+            .Trim();
     }
 
     /// <summary>
