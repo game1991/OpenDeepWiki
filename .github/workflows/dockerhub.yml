@@ -6,22 +6,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-backend:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Debug
-      run: ls -la src/opendeepwiki-source/src/EFCore/OpenDeepWiki.Postgresql/
-    
+
     - uses: docker/login-action@v3
       with:
         username: ${DOCKER_HUB_USERNAME}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
-    
+
     - uses: docker/build-push-action@v5
       with:
         context: ./src/opendeepwiki-source
         file: ./src/opendeepwiki-source/src/OpenDeepWiki/Dockerfile
         push: true
         tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-backend-fixed:latest
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: docker/login-action@v3
+      with:
+        username: ${DOCKER_HUB_USERNAME}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - uses: docker/build-push-action@v5
+      with:
+        context: ./src/opendeepwiki-source/web
+        file: ./src/opendeepwiki-source/web/Dockerfile
+        push: true
+        tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-web:latest
