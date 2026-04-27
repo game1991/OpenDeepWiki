@@ -173,7 +173,7 @@ function TextContentDisplay({ content }: { content: string }) {
               }
               // 代码块内的 code
               return (
-                <code className="text-sm text-zinc-100 font-mono block" {...props}>
+                <code className="text-sm text-zinc-100 font-mono block" style={{ backgroundColor: 'transparent' }} {...props}>
                   {children}
                 </code>
               )
@@ -320,7 +320,7 @@ export function ChatMessageItem({ message }: ChatMessageProps) {
                             )
                           }
                           return (
-                            <code className="text-sm text-zinc-100 font-mono block" {...props}>
+                            <code className="text-sm text-zinc-100 font-mono block" style={{ backgroundColor: 'transparent' }} {...props}>
                               {children}
                             </code>
                           )
