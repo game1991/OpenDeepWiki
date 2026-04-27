@@ -85,8 +85,10 @@ const statusBarColors: Record<number, string> = {
 function getSourceTypeLabelKey(sourceType: AdminRepository["sourceType"]) {
   switch (sourceType) {
     case "Archive":
+    case 1:
       return "sourceTypeArchive";
     case "LocalDirectory":
+    case 2:
       return "sourceTypeLocal";
     default:
       return "sourceTypeGit";
@@ -269,7 +271,7 @@ export default function AdminRepositoriesPage() {
   const selectedGitRepoIds = useMemo(() => {
     const items = data?.items ?? [];
     return items
-      .filter((item) => selectedIds.has(item.id) && item.sourceType === "Git")
+      .filter((item) => selectedIds.has(item.id) && (item.sourceType === "Git" || item.sourceType === 0))
       .map((item) => item.id);
   }, [data, selectedIds]);
   const overview = useMemo(() => {
@@ -592,8 +594,8 @@ export default function AdminRepositoriesPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleSyncStats(repo.id)}
-                              disabled={syncing === repo.id || repo.sourceType !== "Git"}
-                              title={repo.sourceType === "Git" ? t('admin.repositories.syncStats') : t('admin.repositories.syncStatsNotSupported')}
+                              disabled={syncing === repo.id || (repo.sourceType !== "Git" && repo.sourceType !== 0)}
+                              title={(repo.sourceType === "Git" || repo.sourceType === 0) ? t('admin.repositories.syncStats') : t('admin.repositories.syncStatsNotSupported')}
                               className="transition-all duration-200 hover:-translate-y-0.5"
                             >
                               {syncing === repo.id ? (

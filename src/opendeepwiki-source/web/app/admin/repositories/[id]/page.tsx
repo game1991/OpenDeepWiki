@@ -275,7 +275,7 @@ export default function AdminRepositoryManagementPage() {
     );
   }, [selectedLanguageInfo]);
 
-  const supportsGitOperations = repository?.sourceType === "Git";
+  const supportsGitOperations = repository?.sourceType === "Git" || repository?.sourceType === 0;
 
   const processingFlow = useMemo(() => {
     const steps = [
