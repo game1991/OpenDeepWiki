@@ -234,7 +234,7 @@ function MermaidFullscreenModal({
 }
 
 // Mermaid 图表组件
-function MermaidDiagram({ code, isDark, locale }: { code: string; isDark: boolean; locale: "zh" | "en" }) {
+export function MermaidDiagram({ code, isDark, locale }: { code: string; isDark: boolean; locale: "zh" | "en" }) {
   const id = useId().replace(/:/g, "");
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string>("");

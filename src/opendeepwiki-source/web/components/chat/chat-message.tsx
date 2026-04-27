@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { ChatMessage as ChatMessageType, ToolCall, ToolResult, ContentBlock, QuotedText } from "@/hooks/use-chat-history"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { MermaidDiagram } from "@/components/repo/markdown-renderer"
 
 /**
  * 消息组件属性
@@ -162,7 +163,9 @@ function TextContentDisplay({ content }: { content: string }) {
             ),
             code: ({ className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || '')
-              
+              const language = match ? match[1] : ''
+              const codeString = String(children).replace(/\n$/, '')
+
               if (!className && !match) {
                 // 行内代码
                 return (
@@ -171,6 +174,12 @@ function TextContentDisplay({ content }: { content: string }) {
                   </code>
                 )
               }
+
+              // mermaid 图表渲染
+              if (language === 'mermaid') {
+                return <MermaidDiagram code={codeString} isDark={true} locale="zh" />
+              }
+
               // 代码块内的 code
               return (
                 <code className="text-sm text-zinc-100 font-mono block" style={{ backgroundColor: 'transparent' }} {...props}>
@@ -312,6 +321,9 @@ export function ChatMessageItem({ message }: ChatMessageProps) {
                         ),
                         code: ({ className, children, ...props }) => {
                           const match = /language-(\w+)/.exec(className || '')
+                          const language = match ? match[1] : ''
+                          const codeString = String(children).replace(/\n$/, '')
+
                           if (!className && !match) {
                             return (
                               <code className="rounded px-1.5 py-0.5 text-xs text-zinc-200 font-mono break-all" style={{ backgroundColor: '#27272a' }} {...props}>
@@ -319,6 +331,11 @@ export function ChatMessageItem({ message }: ChatMessageProps) {
                               </code>
                             )
                           }
+
+                          if (language === 'mermaid') {
+                            return <MermaidDiagram code={codeString} isDark={true} locale="zh" />
+                          }
+
                           return (
                             <code className="text-sm text-zinc-100 font-mono block" style={{ backgroundColor: 'transparent' }} {...props}>
                               {children}
