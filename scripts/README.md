@@ -41,8 +41,7 @@ minikube service opendeepwiki-frontend -n opendeepwiki
 ```
 
 默认账号：
-- 邮箱: `admin@routin.ai`
-- 密码: `Admin@123`
+- 首次启动后请查看 Pod 日志获取默认凭据，并立即修改密码
 
 ### 3. 备份数据
 

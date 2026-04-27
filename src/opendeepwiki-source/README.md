@@ -178,7 +178,7 @@ make up      # Start all services (detached)
 | Frontend | http://localhost:3000   |
 | Backend API | http://localhost:8080 |
 
-Default admin credentials: `admin@routin.ai` / `Admin@123`
+Default admin credentials are generated on first startup. Check container logs for the default email/password, and change them immediately after first login.
 
 ## Database Configuration
 

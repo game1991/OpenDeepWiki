@@ -8,7 +8,7 @@
 
 ### 1.1 Docker 网络隔离导致 Git Clone 失败
 
-**现象**：OpenDeepWiki 添加私有仓库后，Pod 日志报错 `failed to connect to 172.17.247.87: Connection refused`
+**现象**：OpenDeepWiki 添加私有仓库后，Pod 日志报错 `failed to connect to <YOUR_WSL_IP>: Connection refused`
 
 **根因**：Kind 集群运行在 Docker 容器内，Pod 网络经过三层隔离（Windows → WSL2 → Docker → Pod），Pod 无法访问 WSL2 宿主机的 Git 服务。
 
@@ -25,7 +25,7 @@
 **根因**：WSL2 NAT 模式下，Windows 无法直接访问 WSL 内部端口。Kind 的 `extraPortMappings` 将容器端口映射到 Docker 主机，但 WSL2 到 Windows 还需要一层端口转发。
 
 **解决方案**：
-1. Windows hosts 配置：`172.17.247.87 local.wiki.com local.gateway.com local.dashboard.com`
+1. Windows hosts 配置：`<YOUR_WSL_IP> local.wiki.com local.gateway.com local.dashboard.com`
 2. `.wslconfig` 中配置 `hostAddressLoopback=true`，使 Windows 可直接访问 WSL 端口
 3. 不需要 `netsh interface portproxy`，`hostAddressLoopback` 已足够
 

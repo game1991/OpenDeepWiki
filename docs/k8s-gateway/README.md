@@ -27,7 +27,7 @@
 
 **Windows hosts 配置**：
 ```
-172.17.247.87 local.gateway.com local.dashboard.com local.wiki.com
+<YOUR_WSL_IP> local.gateway.com local.dashboard.com local.wiki.com
 ```
 
 ---
