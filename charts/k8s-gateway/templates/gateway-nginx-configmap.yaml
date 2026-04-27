@@ -1,0 +1,38 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-nginx-conf
+  namespace: {{ .Values.gateway.namespace }}
+  labels:
+    {{- include "k8s-gateway.labels" . | nindent 4 }}
+data:
+  nginx.conf.template: |
+    worker_processes auto;
+    events {
+        worker_connections 1024;
+    }
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+        sendfile      on;
+        keepalive_timeout 65;
+
+        server {
+            listen       80;
+            server_name  localhost;
+
+            # 静态文件
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+            }
+
+            # API: 系统状态（JSON）
+            location /api/status {
+                default_type application/json;
+                return 200 '{"hostIP":"${HOST_IP}","podName":"${POD_NAME}","nodeName":"${NODE_NAME}"}';
+            }
+        }
+    }
+{{- end }}

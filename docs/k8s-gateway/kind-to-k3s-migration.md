@@ -359,8 +359,9 @@ curl -s -H "Host: local.wiki.com" http://localhost:8880/api/system/version
 ### Dashboard 长期 Token
 
 ```bash
-# 创建长期 Secret（只需一次）
-kubectl apply -f docs/k8s-gateway/yamls/06-dashboard-admin.yaml
+# 创建长期 Secret（只需一次，Helm chart 已包含此资源）
+# 如未通过 Helm 部署 Gateway，手动创建：
+kubectl apply -f charts/k8s-gateway/templates/dashboard-admin.yaml
 
 # 获取 Token
 kubectl get secret admin-user-token -n kubernetes-dashboard \

@@ -24,7 +24,7 @@ echo ""
 echo "请输入以下配置信息（输入后不会回显密码）："
 echo ""
 
-# OpenAI API Key
+# AI API Key
 echo "--- AI API 配置 ---"
 read -sp "Chat API Key: " CHAT_API_KEY
 echo ""
@@ -56,19 +56,19 @@ echo "=============================================="
 kubectl create secret generic "$SECRET_NAME" \
   --namespace "$NAMESPACE" \
   --from-literal=chat-api-key="$CHAT_API_KEY" \
-  --from-literal=catalog-api-key="$CATALOG_API_KEY" \
-  --from-literal=content-api-key="$CONTENT_API_KEY" \
-  --from-literal=jwt-secret="$JWT_SECRET" \
+  --from-literal=wiki-catalog-api-key="$CATALOG_API_KEY" \
+  --from-literal=wiki-content-api-key="$CONTENT_API_KEY" \
+  --from-literal=jwt-secret-key="$JWT_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo ""
 echo "Secret '$SECRET_NAME' 已创建/更新"
 echo ""
 echo "包含的 Key："
-echo "   - chat-api-key      (Chat API Key)"
-echo "   - catalog-api-key   (Catalog API Key)"
-echo "   - content-api-key   (Content API Key)"
-echo "   - jwt-secret        (JWT 签名密钥)"
+echo "   - chat-api-key          (Chat API Key)"
+echo "   - wiki-catalog-api-key  (Catalog API Key)"
+echo "   - wiki-content-api-key  (Content API Key)"
+echo "   - jwt-secret-key        (JWT 签名密钥)"
 echo ""
 echo "部署/更新应用："
 echo "   helm upgrade opendeepwiki charts/opendeepwiki -n $NAMESPACE -f config/values-k3s.yaml"
