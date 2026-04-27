@@ -1,5 +1,8 @@
-# OpenDeepWiki k3s 环境配置
-# 使用: helm upgrade --install opendeepwiki ./charts/opendeepwiki -f config/values-k3s.yaml
+# OpenDeepWiki k3s 本地开发配置
+#
+# 使用方法:
+#   1. 创建 Secret: bash scripts/create-opendeepwiki-secret.sh
+#   2. 部署: helm upgrade --install opendeepwiki ./charts/opendeepwiki -f config/values-k3s.yaml
 
 # ==========================================
 # 后端服务配置
@@ -8,7 +11,7 @@ backend:
   replicaCount: 1
 
   image:
-    repository: ${DOCKER_HUB_USERNAME}/opendeepwiki-backend-fixed
+    repository: ${DOCKER_HUB_USERNAME}/opendeepwiki-backend
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -26,55 +29,56 @@ backend:
     size: 10Gi
     accessMode: ReadWriteOnce
 
-  # 环境变量（非敏感信息）
-  # AI 配置 - 金山云星源平台 kimi-k2.5
   environment:
+    # --- ASP.NET Core ---
     ASPNETCORE_ENVIRONMENT: "Production"
-    URLS: "http://+:8080"
+    ASPNETCORE_HTTP_PORTS: "8080"
+    # --- 数据库 ---
     Database__Type: "sqlite"
     ConnectionStrings__Default: "Data Source=/data/opendeepwiki.db"
+    # --- 仓库存储 ---
     REPOSITORIES_DIRECTORY: "/data"
-    # 金山云星源平台 API 端点
+    # --- AI 核心配置 - 金山云星源 kimi-k2.5 ---
     ENDPOINT: "https://kspmas.ksyun.com/v1"
     CHAT_REQUEST_TYPE: "OpenAI"
-    CHAT_REQUEST_MODEL_ID: "kimi-k2.5"
-    CATALOG_REQUEST_MODEL_ID: "kimi-k2.5"
-    CONTENT_REQUEST_MODEL_ID: "kimi-k2.5"
+    # --- Wiki 目录生成 ---
     WIKI_CATALOG_MODEL: "kimi-k2.5"
     WIKI_CATALOG_ENDPOINT: "https://kspmas.ksyun.com/v1"
     WIKI_CATALOG_REQUEST_TYPE: "OpenAI"
+    # --- Wiki 内容生成 ---
     WIKI_CONTENT_MODEL: "kimi-k2.5"
     WIKI_CONTENT_ENDPOINT: "https://kspmas.ksyun.com/v1"
     WIKI_CONTENT_REQUEST_TYPE: "OpenAI"
-    EMBEDDING_MODEL_ID: "text-embedding-3-small"
-    WIKI_PARALLEL_COUNT: "5"
-    WIKI_LANGUAGES: "en,zh"
-    # 翻译配置 - 使用金山云星源平台
+    # --- Wiki 翻译 ---
     WIKI_TRANSLATION_MODEL: "kimi-k2.5"
     WIKI_TRANSLATION_ENDPOINT: "https://kspmas.ksyun.com/v1"
     WIKI_TRANSLATION_REQUEST_TYPE: "OpenAI"
-    # k3s 中 Pod 可以直接访问 WSL2 网络，不需要代理
-    # HTTP_PROXY: ""
-    # HTTPS_PROXY: ""
-    # NO_PROXY: ""
+    # --- Wiki 生成参数 ---
+    WIKI_PARALLEL_COUNT: "5"
+    WIKI_LANGUAGES: "en,zh"
+    WIKI_MAX_OUTPUT_TOKENS: "32000"
+    WIKI_DOCUMENT_GENERATION_TIMEOUT_MINUTES: "60"
+    WIKI_TRANSLATION_TIMEOUT_MINUTES: "45"
+    WIKI_TITLE_TRANSLATION_TIMEOUT_MINUTES: "2"
+    WIKI_README_MAX_LENGTH: "4000"
+    WIKI_DIRECTORY_TREE_MAX_DEPTH: "2"
+    WIKI_MAX_RETRY_ATTEMPTS: "3"
+    WIKI_RETRY_DELAY_MS: "1000"
+    # --- MCP ---
+    MCP_ENABLED: "true"
+    ASPNETCORE_CORS_ORIGINS: ""
 
-  # 敏感信息通过 Secret 注入
   secrets:
     - name: CHAT_API_KEY
       secretName: opendeepwiki-secrets
       key: chat-api-key
-    - name: CATALOG_API_KEY
+    - name: JWT_SECRET_KEY
       secretName: opendeepwiki-secrets
-      key: catalog-api-key
-    - name: CONTENT_API_KEY
+      key: jwt-secret-key
+    # 通过 ASP.NET Core 标准配置层级覆盖 Jwt:SecretKey
+    - name: Jwt__SecretKey
       secretName: opendeepwiki-secrets
-      key: content-api-key
-    - name: WIKI_TRANSLATION_API_KEY
-      secretName: opendeepwiki-secrets
-      key: chat-api-key
-    - name: JWT_SECRET
-      secretName: opendeepwiki-secrets
-      key: jwt-secret
+      key: jwt-secret-key
 
 # ==========================================
 # 前端服务配置
@@ -83,7 +87,7 @@ frontend:
   replicaCount: 1
 
   image:
-    repository: ${DOCKER_HUB_USERNAME}/opendeepwiki-web
+    repository: ${DOCKER_HUB_USERNAME}/opendeepwiki-frontend
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -97,11 +101,10 @@ frontend:
 
   environment:
     NODE_ENV: "production"
-    # k3s 中使用 Service DNS 访问后端
     API_PROXY_URL: "http://opendeepwiki-backend:8080"
 
 # ==========================================
-# Service 配置
+# Service / Ingress
 # ==========================================
 service:
   backend:
@@ -111,15 +114,11 @@ service:
     type: ClusterIP
     port: 3000
 
-# ==========================================
-# Ingress 配置
-# ==========================================
 ingress:
   enabled: true
   className: "traefik"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: opendeepwiki-wiki-limits@kubernetescrd
   hosts:
     - host: local.wiki.com
       paths:
@@ -130,9 +129,6 @@ ingress:
           pathType: Prefix
           service: backend
 
-# ==========================================
-# 关闭生产功能
-# ==========================================
 autoscaling:
   enabled: false
 

@@ -21,7 +21,7 @@ jobs:
         context: ./src/opendeepwiki-source
         file: ./src/opendeepwiki-source/src/OpenDeepWiki/Dockerfile
         push: true
-        tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-backend-fixed:latest
+        tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-backend:latest
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -38,4 +38,4 @@ jobs:
         context: ./src/opendeepwiki-source/web
         file: ./src/opendeepwiki-source/web/Dockerfile
         push: true
-        tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-web:latest
+        tags: ${DOCKER_HUB_USERNAME}/opendeepwiki-frontend:latest
