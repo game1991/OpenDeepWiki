@@ -130,7 +130,7 @@ function normalizeTaskStatus(status: string) {
   return "other";
 }
 
-function getSourceTypeLabelKey(sourceType: AdminRepository["sourceType"]) {
+function getSourceTypeLabelKey(sourceType: AdminRepository["sourceTypeName"]) {
   switch (sourceType) {
     case "Archive":
       return "sourceTypeArchive";
@@ -275,7 +275,7 @@ export default function AdminRepositoryManagementPage() {
     );
   }, [selectedLanguageInfo]);
 
-  const supportsGitOperations = repository?.sourceType === "Git" || repository?.sourceType === 0;
+  const supportsGitOperations = repository?.sourceTypeName === "Git";
 
   const processingFlow = useMemo(() => {
     const steps = [
@@ -885,7 +885,7 @@ export default function AdminRepositoryManagementPage() {
           <h1 className="text-2xl font-bold">{repository.orgName}/{repository.repoName}</h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs">
-              {t(`admin.repositories.${getSourceTypeLabelKey(repository.sourceType)}`)}
+              {t(`admin.repositories.${getSourceTypeLabelKey(repository.sourceTypeName)}`)}
             </span>
             <span className="break-all">{repository.sourceLocation || repository.gitUrl}</span>
           </div>
