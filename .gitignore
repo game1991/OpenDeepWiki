@@ -30,6 +30,7 @@ secret.yaml
 
 # Claude Code 本地文件
 .claude/
+.mcp.json
 
 # 临时文件
 *.tmp
@@ -41,3 +42,5 @@ secret.yaml
 ./*.md
 draft.md
 prod.md
+# Added by code-review-graph
+.code-review-graph/
